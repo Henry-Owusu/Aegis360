@@ -15,3 +15,18 @@ Submit
 Review
      ↓
 Complete
+
+
+
+DATABSE
+Vue 3
+   │
+   │ HTTP
+   ▼
+Flask
+   │
+   │ SQLAlchemy
+   ▼
+SQL Server 2022
+   │
+   └── aegis360 database
