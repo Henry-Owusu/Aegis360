@@ -18,15 +18,36 @@ Complete
 
 
 
-DATABSE
-Vue 3
-   │
-   │ HTTP
-   ▼
+DATABASE
+   Vue.js
+   ↓ HTTP
 Flask
-   │
-   │ SQLAlchemy
-   ▼
-SQL Server 2022
+   ↓
+SQLAlchemy
+   ↓
+pyodbc
+   ↓
+Microsoft ODBC Driver 18
+   ↓
+SQL Server 2022 in Docker
    │
    └── aegis360 database
+
+
+
+
+Flask
+   ↓
+SQLAlchemy
+   ↓
+mssql+pyodbc
+   ↓
+ODBC Driver 18
+   ↓
+127.0.0.1:1433
+   ↓
+Docker
+   ↓
+SQL Server
+   ↓
+Aegis360
