@@ -1,0 +1,107 @@
+Create DPIA
+     ↓
+Enter information
+     ↓
+Save draft
+     ↓
+Complete assessment
+     ↓
+Identify risks
+     ↓
+Add mitigations
+     ↓
+Submit
+     ↓
+Review
+     ↓
+Complete
+
+
+
+DATABASE
+   Vue.js
+   ↓ HTTP
+Flask
+   ↓
+SQLAlchemy
+   ↓
+pyodbc
+   ↓
+Microsoft ODBC Driver 18
+   ↓
+SQL Server 2022 in Docker
+   │
+   └── aegis360 database
+
+
+
+
+Flask
+   ↓
+SQLAlchemy
+   ↓
+mssql+pyodbc
+   ↓
+ODBC Driver 18
+   ↓
+127.0.0.1:1433
+   ↓
+Docker
+   ↓
+SQL Server
+   ↓
+Aegis360
+
+
+
+Microsoft Entra ID
+        │
+        │ "This is Henry"
+        ▼
+     Aegis360
+        │
+        ├── User
+        │
+        ├── Roles
+        │
+        └── Permissions
+
+
+User
+  │
+  ▼
+Microsoft Entra ID
+  │
+  │ JWT
+  ▼
+Aegis360 API
+  │
+  ├── Find user by entra_object_id
+  │
+  ├── If new → create local user
+  │
+  └── Load roles
+          │
+          ▼
+       permissions
+
+
+
+                    ┌──────────────────────┐
+                    │        User          │
+                    │   (Entra ID user)    │
+                    └──────────┬───────────┘
+                               │
+                         user_roles
+                               │
+                               ▼
+                    ┌────────────── ────────┐
+                    │         Role         │
+                    └──────────┬───────────┘
+                               │
+                       role_permissions
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │      Permission      │
+                    └──────────────────────┘

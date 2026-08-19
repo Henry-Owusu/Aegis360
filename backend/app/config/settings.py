@@ -22,3 +22,10 @@ class Config:
     )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    JWT_SECRET_KEY = os.getenv(
+    "JWT_SECRET_KEY",
+    "aegis360-development-secret-change-this"
+)
+    JWT_ALGORITHM = "HS256"
+
+    JWT_EXPIRATION_MINUTES = 60

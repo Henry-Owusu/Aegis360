@@ -1,0 +1,22 @@
+1. Hide API Keys
+2. Purge Git secrets
+3. Use public DB Key
+4. Enable row-level security
+5. Encrypt sensitive data
+6. Enforce server-side auth
+7. Lock record access
+8. Audit admin actions
+9. Block field tampering
+10. Add security headers
+11. Rate limiting login
+12. Add bot protection
+13. Parameterize queries
+14. Validate all input
+15. Escape user content
+16. Restrict file uploads
+17. Enforce HTTPS
+18. Scan dependencies
+19. Use prepared statements
+20. Protect API endpoints
+
+

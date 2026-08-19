@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify
 
 from app.extensions.database import db
+# pyrefly: ignore [missing-import]
 from sqlalchemy import text
 
 
