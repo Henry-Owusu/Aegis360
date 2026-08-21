@@ -1,7 +1,7 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, g
 
 from app.modules.authentication.services.auth_service import AuthService
-
+from app.modules.authentication.middleware.auth import require_auth
 
 auth_bp = Blueprint(
     "auth",
@@ -46,30 +46,19 @@ def mock_login():
 
 
 @auth_bp.get("/me")
+@require_auth
 def get_current_user():
-    email = request.args.get("email")
 
-    if not email:
-        return jsonify({
-            "error": "Email is required"
-        }), 400
+    user = g.current_user
 
-    try:
-        user = AuthService.authenticate_mock(email)
-
-        return jsonify({
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "is_active": user.is_active,
-            },
-            "roles": AuthService.get_user_roles(user),
-            "permissions": AuthService.get_user_permissions(user),
-        }), 200
-
-    except ValueError as error:
-        return jsonify({
-            "error": str(error)
-        }), 401
+    return jsonify({
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "is_active": user.is_active,
+        },
+        "roles": AuthService.get_user_roles(user),
+        "permissions": AuthService.get_user_permissions(user),
+    }), 200

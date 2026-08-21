@@ -105,3 +105,20 @@ Aegis360 API
                     ┌──────────────────────┐
                     │      Permission      │
                     └──────────────────────┘
+
+
+Microsoft Entra ID
+       ↓
+User authenticates
+       ↓
+Aegis360 receives Entra identity
+       ↓
+Find/create local User
+       ↓
+Load User → Roles → Permissions
+       ↓
+Issue/validate application authorization
+       ↓
+API checks permissions
+       ↓
+Allow / Deny
