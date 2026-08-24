@@ -1,63 +1,120 @@
 from functools import wraps
 
-from flask import jsonify, request
+from flask import jsonify
 
-from app.modules.authentication.services.token_service import TokenService
-from app.modules.users.models import User
+from app.modules.authorization.services.authorization_service import (
+    AuthorizationService,
+)
 
 
 def require_permission(permission_name):
+
     def decorator(function):
 
         @wraps(function)
         def wrapper(*args, **kwargs):
 
-            auth_header = request.headers.get("Authorization")
-
-            if not auth_header:
-                return jsonify({
-                    "error": "Authorization header is required"
-                }), 401
-
-            if not auth_header.startswith("Bearer "):
-                return jsonify({
-                    "error": "Invalid authorization header"
-                }), 401
-
-            token = auth_header.split(" ", 1)[1]
-
             try:
-                payload = TokenService.decode_access_token(token)
+                user = AuthorizationService.get_current_user()
 
-            except Exception:
+            except PermissionError as error:
                 return jsonify({
-                    "error": "Invalid or expired token"
-                }), 401
-
-            user = User.query.get(payload.get("sub"))
-
-            if not user:
-                return jsonify({
-                    "error": "User not found"
-                }), 401
-
-            if not user.is_active:
-                return jsonify({
-                    "error": "User account is inactive"
+                    "error": "Forbidden",
+                    "message": str(error),
                 }), 403
 
-            user_permissions = {
-                permission.name
-                for role in user.roles
-                for permission in role.permissions
-            }
+            except ValueError as error:
+                return jsonify({
+                    "error": str(error),
+                }), 401
 
-            if permission_name not in user_permissions:
+            if not AuthorizationService.has_permission(
+                user,
+                permission_name
+            ):
                 return jsonify({
                     "error": "Forbidden",
                     "message": (
                         f"Permission required: {permission_name}"
-                    )
+                    ),
+                }), 403
+
+            return function(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def require_role(role_name):
+
+    def decorator(function):
+
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+
+            try:
+                user = AuthorizationService.get_current_user()
+
+            except PermissionError as error:
+                return jsonify({
+                    "error": "Forbidden",
+                    "message": str(error),
+                }), 403
+
+            except ValueError as error:
+                return jsonify({
+                    "error": str(error),
+                }), 401
+
+            if not AuthorizationService.has_role(
+                user,
+                role_name
+            ):
+                return jsonify({
+                    "error": "Forbidden",
+                    "message": f"Role required: {role_name}",
+                }), 403
+
+            return function(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def require_any_permission(*permission_names):
+
+    def decorator(function):
+
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+
+            try:
+                user = AuthorizationService.get_current_user()
+
+            except PermissionError as error:
+                return jsonify({
+                    "error": "Forbidden",
+                    "message": str(error),
+                }), 403
+
+            except ValueError as error:
+                return jsonify({
+                    "error": str(error),
+                }), 401
+
+            user_permissions = (
+                AuthorizationService.get_user_permissions(user)
+            )
+
+            if not user_permissions.intersection(permission_names):
+                return jsonify({
+                    "error": "Forbidden",
+                    "message": (
+                        "One of these permissions is required: "
+                        + ", ".join(permission_names)
+                    ),
                 }), 403
 
             return function(*args, **kwargs)

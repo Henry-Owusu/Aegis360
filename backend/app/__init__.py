@@ -4,17 +4,15 @@ from flask_migrate import Migrate
 from app.config.settings import Config
 from app.extensions.database import db
 from app.api.health import health_bp
-
 from app.modules.users.models import User
-
 from app.modules.authorization.models import (
     Role,
     Permission,
     UserRole,
     RolePermission,
 )
-
 from app.modules.authentication.routes import auth_bp
+from app.modules.dpia.models import DPIAAssessment
 
 migrate = Migrate()
 

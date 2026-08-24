@@ -122,3 +122,103 @@ Issue/validate application authorization
 API checks permissions
        ↓
 Allow / Deny
+
+
+
+                    Aegis360 API
+                         │
+                         ▼
+                 Authentication
+                         │
+              ┌──────────┴──────────┐
+              │                     │
+        Mock Login             Future Entra ID
+              │                     │
+              └──────────┬──────────┘
+                         ▼
+                       JWT
+                         │
+                         ▼
+                   Current User
+                         │
+                         ▼
+                  Role Assignment
+                         │
+                         ▼
+                    Permissions
+                         │
+                         ▼
+                 @require_permission()
+                         │
+                  ┌──────┴──────┐
+                  ▼             ▼
+                200           403
+             Authorized     Forbidden
+
+
+
+
+
+
+
+
+                    PM
+                     │
+                     ▼
+              ┌─────────────┐
+              │ Basic Data  │
+              └──────┬──────┘
+                     │
+                     ▼
+              ┌─────────────┐
+              │  Screening  │
+              └──────┬──────┘
+                     │
+              Risk tier calculated
+                     │
+              ┌──────┴──────┐
+              │             │
+           NO PIA         FULL PIA
+              │             │
+              ▼             ▼
+          COMPLETED     DPS REVIEW
+                            │
+                       DPS APPROVES
+                            │
+                            ▼
+                       ┌─────────┐
+                       │ Full PIA │
+                       └────┬────┘
+                            │
+                            ▼
+                   Risks Identification
+                            │
+                            ▼
+                   Mitigation Strategies
+                            │
+                            ▼
+                       DPO REVIEW
+                            │
+                       DPO APPROVES
+                            │
+                            ▼
+                    LEGAL APPROVAL
+                            │
+                            ▼
+                       COMPLETED
+
+
+
+
+| Stage               | Responsible      | Action                       |
+| ------------------- | ---------------- | ---------------------------- |
+| Basic Data          | PM               | Complete                     |
+| Screening           | PM               | Complete                     |
+| Screening review    | DPS              | Review + approve             |
+| Full PIA            | DPS              | Complete                     |
+| Risk identification | DPS              | Identify risks               |
+| Mitigation          | DPS              | Define mitigation strategies |
+| DPIA review         | DPO              | Review everything            |
+| DPIA approval       | DPO              | Approve                      |
+| Final approval      | Legal / Approver | Approve                      |
+| No-PIA outcome      | System           | Automatically complete       |

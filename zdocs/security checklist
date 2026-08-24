@@ -18,5 +18,10 @@
 18. Scan dependencies
 19. Use prepared statements
 20. Protect API endpoints
+21. RBAC
+22. Data-level authorization
 
+Implemented
+1. RBAC
+2. Data-level authorization
 

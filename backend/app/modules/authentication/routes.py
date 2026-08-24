@@ -1,7 +1,10 @@
 from flask import Blueprint, jsonify, request, g
 
 from app.modules.authentication.services.auth_service import AuthService
-from app.modules.authentication.middleware.auth import require_auth
+# from app.modules.authentication.middleware.auth import require_auth
+from app.modules.authorization.services.authorization_service import (
+    AuthorizationService,
+)
 
 auth_bp = Blueprint(
     "auth",
@@ -46,10 +49,21 @@ def mock_login():
 
 
 @auth_bp.get("/me")
-@require_auth
 def get_current_user():
 
-    user = g.current_user
+    try:
+        user = AuthorizationService.get_current_user()
+
+    except PermissionError as error:
+        return jsonify({
+            "error": "Forbidden",
+            "message": str(error),
+        }), 403
+
+    except ValueError as error:
+        return jsonify({
+            "error": str(error),
+        }), 401
 
     return jsonify({
         "user": {
@@ -59,6 +73,10 @@ def get_current_user():
             "last_name": user.last_name,
             "is_active": user.is_active,
         },
-        "roles": AuthService.get_user_roles(user),
-        "permissions": AuthService.get_user_permissions(user),
+        "roles": list(
+            AuthorizationService.get_user_roles(user)
+        ),
+        "permissions": list(
+            AuthorizationService.get_user_permissions(user)
+        ),
     }), 200
