@@ -15,15 +15,58 @@ class DPIAAssessment(db.Model):
         default=lambda: str(uuid.uuid4())
     )
 
+    # ============================================================
+    # BASIC DATA
+    # ============================================================
+
+    project_manager = db.Column(
+        db.String(255),
+        nullable=False
+    )
+
+    department_function_agency = db.Column(
+        db.String(255),
+        nullable=True
+    )
+
+    area_ministry = db.Column(
+        db.String(255),
+        nullable=True
+    )
+
+    region = db.Column(
+        db.String(255),
+        nullable=True
+    )
+
     title = db.Column(
         db.String(255),
         nullable=False
+    )
+
+    nature_of_change = db.Column(
+        db.JSON,
+        nullable=False
+    )
+
+    other_nature_of_change = db.Column(
+        db.String(500),
+        nullable=True
     )
 
     description = db.Column(
         db.Text,
         nullable=True
     )
+
+    implementation_timescales = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    # ============================================================
+    # WORKFLOW
+    # ============================================================
 
     status = db.Column(
         db.String(50),
@@ -48,4 +91,15 @@ class DPIAAssessment(db.Model):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
+    )
+
+    # ============================================================
+    # RELATIONSHIPS
+    # ============================================================
+
+    screening = db.relationship(
+        "DPIAScreening",
+        back_populates="assessment",
+        uselist=False,
+        cascade="all, delete-orphan"
     )

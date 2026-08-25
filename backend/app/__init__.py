@@ -12,7 +12,13 @@ from app.modules.authorization.models import (
     RolePermission,
 )
 from app.modules.authentication.routes import auth_bp
-from app.modules.dpia.models import DPIAAssessment
+from app.modules.dpia.models import (
+    DPIAAssessment,
+    DPIAScreening
+)
+from app.modules.dpia.routes import (
+    dpia_bp
+)
 
 migrate = Migrate()
 
@@ -27,5 +33,6 @@ def create_app():
 
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(dpia_bp)
 
     return app
