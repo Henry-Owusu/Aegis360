@@ -175,3 +175,8 @@ class DPIAScreening(db.Model):
         "DPIAAssessment",
         back_populates="screening"
     )
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+

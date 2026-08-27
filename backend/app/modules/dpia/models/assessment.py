@@ -70,23 +70,23 @@ class DPIAAssessment(db.Model):
         default="draft"
     )
 
-    dps_review_decision = db.Column(
+    dpo_review_decision = db.Column(
         db.String(50),
         nullable=True
     )
 
-    dps_review_comment = db.Column(
+    dpo_review_comment = db.Column(
         db.Text,
         nullable=True
     )
 
-    dps_reviewed_by = db.Column(
+    dpo_reviewed_by = db.Column(
         db.String(36),
         db.ForeignKey("users.id"),
         nullable=True
     )
 
-    dps_reviewed_at = db.Column(
+    dpo_reviewed_at = db.Column(
         db.DateTime(timezone=True),
         nullable=True
     )
@@ -118,3 +118,14 @@ class DPIAAssessment(db.Model):
         uselist=False,
         cascade="all, delete-orphan"
     )
+
+    full_pia = db.relationship(
+        "DPIAFullPIA",
+        back_populates="assessment",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)

@@ -253,3 +253,18 @@ Risk table
 FRONTEND
 
 
+
+DPIAAssessment
+      │
+      │ 1-to-1
+      ▼
+DPIAFullPIA
+      │
+      │ 1-to-many
+      ▼
+DPIAFullPIAResponse
+      │
+      │ many-to-1
+      ▼
+DPIAFullPIAQuestion
+

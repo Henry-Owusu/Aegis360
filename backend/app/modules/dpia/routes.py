@@ -1,4 +1,3 @@
-from app.modules.dpia.models import assessment
 from flask import Blueprint, jsonify, request, g
 from datetime import datetime, timezone
 
@@ -14,6 +13,9 @@ from app.modules.authorization.decorators import (
 from app.modules.dpia.models import (
     DPIAAssessment,
     DPIAScreening,
+    DPIAFullPIA,
+    DPIAFullPIAResponse,
+    DPIAFullPIAQuestion,
 )
 
 
@@ -25,9 +27,7 @@ dpia_bp = Blueprint(
 )
 
 
-# ============================================================
 # CREATE DPIA ASSESSMENT - BASIC DATA
-# ============================================================
 
 @dpia_bp.post("/assessments")
 @require_auth
@@ -614,7 +614,7 @@ def submit_screening(assessment_id):
         }), 400
 
     assessment.status = (
-        "dps_review"
+        "dpo_review"
         if screening.full_pia_required
         else "completed"
     )
@@ -634,10 +634,10 @@ def submit_screening(assessment_id):
 # GET DPS REVIEW
 # ============================================================
 
-@dpia_bp.get("/assessments/<assessment_id>/dps-review")
+@dpia_bp.get("/assessments/<assessment_id>/dpo-review")
 @require_auth
 @require_permission("assessment.view")
-def get_dps_review(assessment_id):
+def get_dpo_review(assessment_id):
 
     assessment = DPIAAssessment.query.get(assessment_id)
 
@@ -649,13 +649,13 @@ def get_dps_review(assessment_id):
     return jsonify({
         "assessment_id": assessment.id,
         "status": assessment.status,
-        "dps_review": {
-            "decision": assessment.dps_review_decision,
-            "comment": assessment.dps_review_comment,
-            "reviewed_by": assessment.dps_reviewed_by,
+        "dpo_review": {
+            "decision": assessment.dpo_review_decision,
+            "comment": assessment.dpo_review_comment,
+            "reviewed_by": assessment.dpo_reviewed_by,
             "reviewed_at": (
-                assessment.dps_reviewed_at.isoformat()
-                if assessment.dps_reviewed_at
+                assessment.dpo_reviewed_at.isoformat()
+                if assessment.dpo_reviewed_at
                 else None
             ),
         }
@@ -663,14 +663,14 @@ def get_dps_review(assessment_id):
 
 
 # ============================================================
-# SUBMIT DPS REVIEW
+# SUBMIT DPO REVIEW
 # ============================================================
 
-@dpia_bp.post("/assessments/<assessment_id>/dps-review")
+@dpia_bp.post("/assessments/<assessment_id>/dpo-review")
 @require_auth
 @require_permission("assessment.approve")
-@require_role("DPS")
-def submit_dps_review(assessment_id):
+@require_role("DPO")
+def submit_dpo_review(assessment_id):
 
     assessment = DPIAAssessment.query.get(assessment_id)
 
@@ -679,10 +679,10 @@ def submit_dps_review(assessment_id):
             "error": "Assessment not found"
         }), 404
 
-    # DPS can only review assessments waiting for DPS review
-    if assessment.status != "dps_review":
+    # DPO can only review assessments waiting for DPO review
+    if assessment.status != "dpo_review":
         return jsonify({
-            "error": "Assessment is not awaiting DPS review",
+            "error": "Assessment is not awaiting DPO review",
             "status": assessment.status
         }), 409
 
@@ -707,10 +707,10 @@ def submit_dps_review(assessment_id):
     # Current authenticated user
     reviewer = g.current_user
 
-    assessment.dps_review_decision = decision
-    assessment.dps_review_comment = comment
-    assessment.dps_reviewed_by = reviewer.id
-    assessment.dps_reviewed_at = datetime.now(timezone.utc)
+    assessment.dpo_review_decision = decision
+    assessment.dpo_review_comment = comment
+    assessment.dpo_reviewed_by = reviewer.id
+    assessment.dpo_reviewed_at = datetime.now(timezone.utc)
 
     # Move assessment through the workflow
     if decision == "approved":
@@ -721,10 +721,353 @@ def submit_dps_review(assessment_id):
     db.session.commit()
 
     return jsonify({
-        "message": "DPS review submitted successfully",
+        "message": "DPO review submitted successfully",
         "assessment_id": assessment.id,
         "decision": decision,
         "status": assessment.status,
         "reviewed_by": reviewer.id,
-        "reviewed_at": assessment.dps_reviewed_at.isoformat(),
+        "reviewed_at": assessment.dpo_reviewed_at.isoformat(),
+    }), 200
+
+
+
+# ============================================================
+# GET FULL PIA
+# ============================================================
+
+@dpia_bp.get("/<assessment_id>/full-pia")
+@require_auth
+@require_permission("assessment.view")
+def get_full_pia(assessment_id):
+
+    assessment = DPIAAssessment.query.get(assessment_id)
+
+    if not assessment:
+        return jsonify({
+            "error": "Assessment not found"
+        }), 404
+
+    if assessment.status not in ["full_pia", "completed"]:
+        return jsonify({
+            "error": "Assessment is not in the Full PIA stage",
+            "status": assessment.status
+        }), 409
+
+    full_pia = assessment.full_pia
+
+    questions = (
+        DPIAFullPIAQuestion.query
+        .filter_by(is_active=True)
+        .order_by(
+            DPIAFullPIAQuestion.display_order.asc()
+        )
+        .all()
+    )
+
+    responses = {}
+
+    if full_pia:
+        for response in full_pia.responses:
+            responses[response.question_id] = {
+                "id": response.id,
+                "answer": response.answer,
+                "answered_by": response.answered_by,
+                "answered_at": (
+                    response.answered_at.isoformat()
+                    if response.answered_at
+                    else None
+                ),
+            }
+
+    return jsonify({
+        "assessment_id": assessment.id,
+        "status": assessment.status,
+        "full_pia": (
+            {
+                "id": full_pia.id,
+                "status": full_pia.status,
+                "started_at": full_pia.started_at.isoformat(),
+                "submitted_at": (
+                    full_pia.submitted_at.isoformat()
+                    if full_pia.submitted_at
+                    else None
+                ),
+            }
+            if full_pia
+            else None
+        ),
+        "questions": [
+            {
+                "id": question.id,
+                "section": question.section,
+                "section_title": question.section_title,
+                "question_number": question.question_number,
+                "question_text": question.question_text,
+                "guidance": question.guidance,
+                "answer_type": question.answer_type,
+                "options": question.options,
+                "required": question.required,
+                "display_order": question.display_order,
+                "conditional_logic": question.conditional_logic,
+                "answer": (
+                    responses[question.id]["answer"]
+                    if question.id in responses
+                    else None
+                ),
+                "response_id": (
+                    responses[question.id]["id"]
+                    if question.id in responses
+                    else None
+                ),
+            }
+            for question in questions
+        ],
+    }), 200
+
+
+# ============================================================
+# CREATE FULL PIA
+# ============================================================
+
+@dpia_bp.post("/<assessment_id>/full-pia")
+@require_auth
+@require_permission("assessment.edit")
+def create_full_pia(assessment_id):
+
+    assessment = DPIAAssessment.query.get(assessment_id)
+
+    if not assessment:
+        return jsonify({
+            "error": "Assessment not found"
+        }), 404
+
+    if assessment.status != "full_pia":
+        return jsonify({
+            "error": "Assessment is not ready for Full PIA",
+            "status": assessment.status
+        }), 409
+
+    if assessment.full_pia:
+        return jsonify({
+            "error": "Full PIA already exists",
+            "full_pia_id": assessment.full_pia.id
+        }), 409
+
+    full_pia = DPIAFullPIA(
+        assessment_id=assessment.id,
+        status="draft"
+    )
+
+    db.session.add(full_pia)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Full PIA created successfully",
+        "assessment_id": assessment.id,
+        "full_pia_id": full_pia.id,
+        "status": full_pia.status,
+        "started_at": full_pia.started_at.isoformat(),
+    }), 201
+
+
+# ============================================================
+# SAVE FULL PIA RESPONSES
+# ============================================================
+
+@dpia_bp.put("/<assessment_id>/full-pia/responses")
+@require_auth
+@require_permission("assessment.edit")
+def save_full_pia_responses(assessment_id):
+
+    assessment = DPIAAssessment.query.get(assessment_id)
+
+    if not assessment:
+        return jsonify({
+            "error": "Assessment not found"
+        }), 404
+
+    if assessment.status != "full_pia":
+        return jsonify({
+            "error": "Full PIA is not available for editing",
+            "status": assessment.status
+        }), 409
+
+    full_pia = assessment.full_pia
+
+    if not full_pia:
+        return jsonify({
+            "error": "Full PIA has not been created"
+        }), 404
+
+    if full_pia.status != "draft":
+        return jsonify({
+            "error": "Full PIA can no longer be edited",
+            "status": full_pia.status
+        }), 409
+
+    data = request.get_json() or {}
+
+    responses = data.get("responses")
+
+    if not isinstance(responses, list):
+        return jsonify({
+            "error": "responses must be an array"
+        }), 400
+
+    question_ids = {
+        question.id
+        for question in DPIAFullPIAQuestion.query.filter_by(
+            is_active=True
+        ).all()
+    }
+
+    saved = []
+
+    for item in responses:
+
+        question_id = item.get("question_id")
+        answer = item.get("answer")
+
+        if not question_id:
+            return jsonify({
+                "error": "Each response must include question_id"
+            }), 400
+
+        if question_id not in question_ids:
+            return jsonify({
+                "error": "Invalid question_id",
+                "question_id": question_id
+            }), 400
+
+        response = DPIAFullPIAResponse.query.filter_by(
+            full_pia_id=full_pia.id,
+            question_id=question_id
+        ).first()
+
+        if not response:
+            response = DPIAFullPIAResponse(
+                full_pia_id=full_pia.id,
+                question_id=question_id
+            )
+            db.session.add(response)
+
+        response.answer = answer
+        response.answered_by = g.current_user.id
+        response.answered_at = datetime.now(timezone.utc)
+
+        saved.append(question_id)
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Full PIA responses saved successfully",
+        "assessment_id": assessment.id,
+        "full_pia_id": full_pia.id,
+        "saved_questions": saved,
+        "saved_count": len(saved),
+    }), 200
+
+
+# ============================================================
+# SUBMIT FULL PIA
+# ============================================================
+
+@dpia_bp.post("/<assessment_id>/full-pia/submit")
+@require_auth
+@require_permission("assessment.edit")
+def submit_full_pia(assessment_id):
+
+    assessment = DPIAAssessment.query.get(assessment_id)
+
+    if not assessment:
+        return jsonify({
+            "error": "Assessment not found"
+        }), 404
+
+    if assessment.status != "full_pia":
+        return jsonify({
+            "error": "Assessment is not in the Full PIA stage",
+            "status": assessment.status
+        }), 409
+
+    full_pia = assessment.full_pia
+
+    if not full_pia:
+        return jsonify({
+            "error": "Full PIA has not been created"
+        }), 404
+
+    if full_pia.status != "draft":
+        return jsonify({
+            "error": "Full PIA has already been submitted",
+            "status": full_pia.status
+        }), 409
+
+    questions = (
+        DPIAFullPIAQuestion.query
+        .filter_by(is_active=True)
+        .order_by(
+            DPIAFullPIAQuestion.display_order.asc()
+        )
+        .all()
+    )
+
+    responses = {
+        response.question_id: response
+        for response in full_pia.responses
+    }
+
+    missing_questions = []
+
+    for question in questions:
+
+        # No response exists
+        if question.id not in responses:
+            if question.required:
+                missing_questions.append({
+                    "question_number": question.question_number,
+                    "question_id": question.id,
+                    "reason": "Required question has not been answered"
+                })
+
+            continue
+
+        response = responses[question.id]
+
+        # Empty answer
+        if (
+            question.required
+            and (
+                response.answer is None
+                or response.answer == ""
+                or response.answer == []
+            )
+        ):
+            missing_questions.append({
+                "question_number": question.question_number,
+                "question_id": question.id,
+                "reason": "Required question has not been answered"
+            })
+
+    if missing_questions:
+        return jsonify({
+            "error": "Full PIA cannot be submitted",
+            "message": "Please answer all required questions",
+            "missing_questions": missing_questions,
+        }), 400
+
+    full_pia.status = "submitted"
+    full_pia.submitted_at = datetime.now(timezone.utc)
+
+    assessment.status = "completed"
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Full PIA submitted successfully",
+        "assessment_id": assessment.id,
+        "full_pia_id": full_pia.id,
+        "full_pia_status": full_pia.status,
+        "assessment_status": assessment.status,
+        "submitted_at": full_pia.submitted_at.isoformat(),
     }), 200

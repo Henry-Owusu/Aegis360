@@ -59,3 +59,24 @@ class User(db.Model):
         secondary="user_roles",
         back_populates="users"
     )
+
+    def __init__(
+        self,
+        entra_object_id: str | None = None,
+        email: str | None = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
+        is_active: bool = True,
+        **kwargs
+    ):
+        if entra_object_id is not None:
+            self.entra_object_id = entra_object_id
+        if email is not None:
+            self.email = email
+        if first_name is not None:
+            self.first_name = first_name
+        if last_name is not None:
+            self.last_name = last_name
+        self.is_active = is_active
+        for key, value in kwargs.items():
+            setattr(self, key, value)

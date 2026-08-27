@@ -50,3 +50,11 @@ class Role(db.Model):
         secondary="user_roles",
         back_populates="roles"
     )
+
+    def __init__(self, name: str | None = None, description: str | None = None, **kwargs):
+        if name is not None:
+            self.name = name
+        if description is not None:
+            self.description = description
+        for key, value in kwargs.items():
+            setattr(self, key, value)

@@ -14,10 +14,6 @@ ROLES = [
         "description": "Data Protection Officer",
     },
     {
-        "name": "DPS",
-        "description": "Data Protection Specialist",
-    },
-    {
         "name": "Auditor",
         "description": "Audit and read-only access",
     },
@@ -48,6 +44,10 @@ PERMISSIONS = [
     {
         "name": "assessment.delete",
         "description": "Delete DPIA assessments.",
+    },
+    {
+        "name": "assessment.dpo_review",
+        "description": "Review DPIA assessments as the Data Protection Officer.",
     },
     {
         "name": "assessment.approve",
@@ -123,24 +123,11 @@ ROLE_PERMISSIONS = {
         "assessment.view",
         "assessment.create",
         "assessment.edit",
-        "assessment.approve",
+        "assessment.dpo_review",
         "risk.view",
         "risk.create",
         "risk.edit",
         "risk.manage",
-        "report.view",
-        "report.create",
-        "report.export",
-    ],
-
-    "DPS": [
-        "assessment.view",
-        "assessment.create",
-        "assessment.edit",
-        "assessment.approve",
-        "risk.view",
-        "risk.create",
-        "risk.edit",
         "report.view",
         "report.create",
         "report.export",
@@ -214,11 +201,12 @@ def seed_role_permissions(roles, permissions):
     for role_name, permission_names in ROLE_PERMISSIONS.items():
         role = roles[role_name]
 
-        for permission_name in permission_names:
-            permission = permissions[permission_name]
+        desired_permissions = {
+            permissions[permission_name]
+            for permission_name in permission_names
+        }
 
-            if permission not in role.permissions:
-                role.permissions.append(permission)
+        role.permissions = list(desired_permissions)
 
 
 def main():
