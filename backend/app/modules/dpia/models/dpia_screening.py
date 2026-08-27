@@ -22,20 +22,17 @@ class DPIAScreening(db.Model):
         nullable=False
     )
 
-    # ---------------------------------------------------------
+
     # Personal Data
-    # ---------------------------------------------------------
 
     involves_personal_data = db.Column(
         db.Boolean,
         nullable=True
     )
 
-    # ---------------------------------------------------------
     # Personal Data Categories
     # Stored as JSON for now because each question supports
     # multiple selections.
-    # ---------------------------------------------------------
 
     personal_data_subject_types = db.Column(
         db.JSON,
@@ -57,10 +54,7 @@ class DPIAScreening(db.Model):
         nullable=True
     )
 
-    # ---------------------------------------------------------
     # Data Subject Locations
-    # ---------------------------------------------------------
-
     data_subject_locations = db.Column(
         db.JSON,
         nullable=True
@@ -71,9 +65,9 @@ class DPIAScreening(db.Model):
         nullable=True
     )
 
-    # ---------------------------------------------------------
+
     # Volume / Access
-    # ---------------------------------------------------------
+
 
     approximate_users_with_access = db.Column(
         db.Integer,
@@ -85,9 +79,9 @@ class DPIAScreening(db.Model):
         nullable=True
     )
 
-    # ---------------------------------------------------------
+
     # System Use Locations
-    # ---------------------------------------------------------
+
 
     system_use_locations = db.Column(
         db.JSON,
@@ -99,9 +93,8 @@ class DPIAScreening(db.Model):
         nullable=True
     )
 
-    # ---------------------------------------------------------
+
     # Hosting
-    # ---------------------------------------------------------
 
     system_hosting_locations = db.Column(
         db.JSON,
@@ -118,9 +111,9 @@ class DPIAScreening(db.Model):
         nullable=True
     )
 
-    # ---------------------------------------------------------
+ 
     # Support
-    # ---------------------------------------------------------
+ 
 
     system_support_types = db.Column(
         db.JSON,
@@ -137,9 +130,8 @@ class DPIAScreening(db.Model):
         nullable=True
     )
 
-    # ---------------------------------------------------------
+
     # Third Party Access
-    # ---------------------------------------------------------
 
     third_party_access = db.Column(
         db.Boolean,
@@ -151,9 +143,7 @@ class DPIAScreening(db.Model):
         nullable=True
     )
 
-    # ---------------------------------------------------------
     # Screening Outcome
-    # ---------------------------------------------------------
 
     # Risk calculation is intentionally NOT implemented yet.
     # This field is reserved for the future screening engine.
@@ -167,10 +157,6 @@ class DPIAScreening(db.Model):
         db.Boolean,
         nullable=True
     )
-
-    # ---------------------------------------------------------
-    # Audit timestamps
-    # ---------------------------------------------------------
 
     created_at = db.Column(
         db.DateTime(timezone=True),

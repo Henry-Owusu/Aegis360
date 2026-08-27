@@ -15,9 +15,7 @@ class DPIAAssessment(db.Model):
         default=lambda: str(uuid.uuid4())
     )
 
-    # ============================================================
     # BASIC DATA
-    # ============================================================
 
     project_manager = db.Column(
         db.String(255),
@@ -64,9 +62,7 @@ class DPIAAssessment(db.Model):
         nullable=True
     )
 
-    # ============================================================
     # WORKFLOW
-    # ============================================================
 
     status = db.Column(
         db.String(50),
@@ -114,9 +110,7 @@ class DPIAAssessment(db.Model):
         onupdate=lambda: datetime.now(timezone.utc)
     )
 
-    # ============================================================
     # RELATIONSHIPS
-    # ============================================================
 
     screening = db.relationship(
         "DPIAScreening",

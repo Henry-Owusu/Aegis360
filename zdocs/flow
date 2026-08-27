@@ -222,3 +222,34 @@ Allow / Deny
 | DPIA approval       | DPO              | Approve                      |
 | Final approval      | Legal / Approver | Approve                      |
 | No-PIA outcome      | System           | Automatically complete       |
+
+
+
+Backend
+Create roles and permissions
+       ↓
+Create authentication services
+       ↓
+Create authorization services
+       ↓
+Create authentication middleware
+       ↓
+DPIA Assessment table 
+       ↓
+DPIA Screening table --- Current
+       ↓
+Basic information table
+       ↓
+Screening questions table
+       ↓
+Risk questions table
+       ↓
+Mitigation questions table
+       ↓
+Risk table
+
+
+
+FRONTEND
+
+
