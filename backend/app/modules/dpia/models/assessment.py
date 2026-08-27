@@ -74,6 +74,27 @@ class DPIAAssessment(db.Model):
         default="draft"
     )
 
+    dps_review_decision = db.Column(
+        db.String(50),
+        nullable=True
+    )
+
+    dps_review_comment = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    dps_reviewed_by = db.Column(
+        db.String(36),
+        db.ForeignKey("users.id"),
+        nullable=True
+    )
+
+    dps_reviewed_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=True
+    )
+
     created_by = db.Column(
         db.String(36),
         db.ForeignKey("users.id"),

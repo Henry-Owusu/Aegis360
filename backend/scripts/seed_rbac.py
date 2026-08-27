@@ -137,6 +137,7 @@ ROLE_PERMISSIONS = {
         "assessment.view",
         "assessment.create",
         "assessment.edit",
+        "assessment.approve",
         "risk.view",
         "risk.create",
         "risk.edit",
@@ -238,3 +239,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+

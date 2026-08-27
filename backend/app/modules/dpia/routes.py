@@ -1,11 +1,15 @@
 from app.modules.dpia.models import assessment
 from flask import Blueprint, jsonify, request, g
+from datetime import datetime, timezone
 
 from app.extensions.database import db
 
 from app.modules.authentication.middleware.auth import require_auth
 
-from app.modules.authorization.decorators import require_permission
+from app.modules.authorization.decorators import (
+    require_permission,
+    require_role,
+)
 
 from app.modules.dpia.models import (
     DPIAAssessment,
@@ -622,4 +626,105 @@ def submit_screening(assessment_id):
         "assessment_id": assessment.id,
         "full_pia_required": screening.full_pia_required,
         "next_status": assessment.status,
+    }), 200
+
+
+
+# ============================================================
+# GET DPS REVIEW
+# ============================================================
+
+@dpia_bp.get("/assessments/<assessment_id>/dps-review")
+@require_auth
+@require_permission("assessment.view")
+def get_dps_review(assessment_id):
+
+    assessment = DPIAAssessment.query.get(assessment_id)
+
+    if not assessment:
+        return jsonify({
+            "error": "Assessment not found"
+        }), 404
+
+    return jsonify({
+        "assessment_id": assessment.id,
+        "status": assessment.status,
+        "dps_review": {
+            "decision": assessment.dps_review_decision,
+            "comment": assessment.dps_review_comment,
+            "reviewed_by": assessment.dps_reviewed_by,
+            "reviewed_at": (
+                assessment.dps_reviewed_at.isoformat()
+                if assessment.dps_reviewed_at
+                else None
+            ),
+        }
+    }), 200
+
+
+# ============================================================
+# SUBMIT DPS REVIEW
+# ============================================================
+
+@dpia_bp.post("/assessments/<assessment_id>/dps-review")
+@require_auth
+@require_permission("assessment.approve")
+@require_role("DPS")
+def submit_dps_review(assessment_id):
+
+    assessment = DPIAAssessment.query.get(assessment_id)
+
+    if not assessment:
+        return jsonify({
+            "error": "Assessment not found"
+        }), 404
+
+    # DPS can only review assessments waiting for DPS review
+    if assessment.status != "dps_review":
+        return jsonify({
+            "error": "Assessment is not awaiting DPS review",
+            "status": assessment.status
+        }), 409
+
+    data = request.get_json() or {}
+
+    decision = data.get("decision")
+    comment = data.get("comment")
+
+    # Validate decision
+    if decision not in ["approved", "rejected"]:
+        return jsonify({
+            "error": "Invalid decision",
+            "message": "Decision must be 'approved' or 'rejected'"
+        }), 400
+
+    # Rejection must include a reason
+    if decision == "rejected" and not comment:
+        return jsonify({
+            "error": "Comment is required when rejecting an assessment"
+        }), 400
+
+    # Current authenticated user
+    reviewer = g.current_user
+
+    assessment.dps_review_decision = decision
+    assessment.dps_review_comment = comment
+    assessment.dps_reviewed_by = reviewer.id
+    assessment.dps_reviewed_at = datetime.now(timezone.utc)
+
+    # Move assessment through the workflow
+    if decision == "approved":
+        assessment.status = "full_pia"
+    else:
+        assessment.status = "draft"
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "DPS review submitted successfully",
+        "assessment_id": assessment.id,
+        "decision": decision,
+        "status": assessment.status,
+        "reviewed_by": reviewer.id,
+        "reviewed_at": assessment.dps_reviewed_at.isoformat(),
     }), 200
