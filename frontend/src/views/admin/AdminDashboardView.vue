@@ -1,5 +1,39 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import AdminLayout from './components/AdminLayout.vue'
+import { dpiaApi, usersApi } from '@/services/api'
+
+const router = useRouter()
+
+const totalAssessments = ref(0)
+const totalUsers = ref(0)
+const pendingReviews = ref(0)
+const isLoading = ref(true)
+
+const fetchDashboardData = async () => {
+  isLoading.value = true
+  try {
+    const [assessmentsRes, usersRes] = await Promise.all([
+      dpiaApi.listAssessments(),
+      usersApi.listUsers()
+    ])
+    
+    totalAssessments.value = assessmentsRes.total
+    totalUsers.value = usersRes.total
+    
+    // For pending reviews, count assessments not in 'approved' or 'rejected'
+    pendingReviews.value = assessmentsRes.assessments.filter(a => 
+      a.status !== 'approved' && a.status !== 'rejected' && a.status !== 'draft'
+    ).length
+  } catch (error) {
+    console.error('Failed to load dashboard data:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchDashboardData)
 </script>
 
 <template>
@@ -26,7 +60,7 @@ import AdminLayout from './components/AdminLayout.vue'
           </button>
         </div>
         <div class="card-body">
-          <div class="value">15,612</div>
+          <div class="value">{{ isLoading ? '...' : totalAssessments }}</div>
           <div class="trend positive">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
@@ -36,7 +70,7 @@ import AdminLayout from './components/AdminLayout.vue'
           </div>
         </div>
         <div class="card-footer">
-          <a href="#" class="view-link">View Report &rarr;</a>
+          <button class="view-link" @click="router.push('/admin/assessments')">View Report &rarr;</button>
         </div>
       </div>
 
@@ -63,7 +97,7 @@ import AdminLayout from './components/AdminLayout.vue'
           </button>
         </div>
         <div class="card-body">
-          <div class="value">28,265</div>
+          <div class="value">{{ isLoading ? '...' : totalUsers }}</div>
           <div class="trend positive">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
@@ -73,7 +107,7 @@ import AdminLayout from './components/AdminLayout.vue'
           </div>
         </div>
         <div class="card-footer">
-          <a href="#" class="view-link">View Users &rarr;</a>
+          <button class="view-link" @click="router.push('/admin/users')">View Users &rarr;</button>
         </div>
       </div>
 
@@ -98,7 +132,7 @@ import AdminLayout from './components/AdminLayout.vue'
           </button>
         </div>
         <div class="card-body">
-          <div class="value">642</div>
+          <div class="value">{{ isLoading ? '...' : pendingReviews }}</div>
           <div class="trend negative">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
@@ -108,7 +142,7 @@ import AdminLayout from './components/AdminLayout.vue'
           </div>
         </div>
         <div class="card-footer">
-          <a href="#" class="view-link">View Queue &rarr;</a>
+          <button class="view-link" @click="router.push('/admin/assessments')">View Queue &rarr;</button>
         </div>
       </div>
 
@@ -307,6 +341,10 @@ h3 {
 }
 
 .view-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   color: #92929D;
   font-size: 13px;
   text-decoration: none;

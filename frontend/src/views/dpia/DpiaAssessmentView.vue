@@ -1,71 +1,50 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import PmSidebar from './components/PmSidebar.vue'
+import { dpiaApi } from '@/services/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const searchQuery = ref('')
-const currentStep = ref(1) // Step 1: Basic Details, Step 2: Screening Matrix, Step 3: Assign DPS
 
-// Step 1 Form Fields
-const projectName = ref('Global HRIS Migration')
-const businessUnit = ref('hr')
-const projectManager = ref('Executive Admin')
-const goLiveDate = ref('2026-10-15')
-const purposeOfProcessing = ref('Consolidate global employee records into a unified cloud database for HR analytics and payroll processing.')
+const currentStep = ref(1) // 1: Basic Data, 2: Screening, 3: Full PIA
+const assessmentId = ref<string | null>(null)
 
-// Interactive Data Category Tags
-interface DataCategory {
-  id: string
-  label: string
-  selected: boolean
+// Step 1: Fixed metadata
+const title = ref('')
+const projectManager = ref('')
+
+// Dynamic data
+const basicDataQuestions = ref<any[]>([])
+const screeningQuestions = ref<any[]>([])
+const fullPiaQuestions = ref<any[]>([])
+
+// Responses dicts
+const basicDataResponses = ref<Record<string, any>>({})
+const screeningResponses = ref<Record<string, any>>({})
+const fullPiaResponses = ref<Record<string, any>>({})
+
+const isLoading = ref(false)
+
+const loadQuestions = async () => {
+  try {
+    const [bd, sc, fp] = await Promise.all([
+      dpiaApi.getQuestions('basic_data'),
+      dpiaApi.getQuestions('screening'),
+      dpiaApi.getQuestions('full_pia')
+    ])
+    basicDataQuestions.value = bd.questions || []
+    screeningQuestions.value = sc.questions || []
+    fullPiaQuestions.value = fp.questions || []
+  } catch (error) {
+    console.error('Failed to load questions', error)
+  }
 }
 
-const dataCategories = ref<DataCategory[]>([
-  { id: 'personal_id', label: 'Personal ID', selected: true },
-  { id: 'financial_data', label: 'Financial Data', selected: true },
-  { id: 'health_info', label: 'Health Info', selected: true },
-  { id: 'biometric', label: 'Biometric', selected: false },
-  { id: 'location_data', label: 'Location Data', selected: false }
-])
-
-const toggleCategory = (category: DataCategory) => {
-  category.selected = !category.selected
-}
-
-// Step 2: Screening Matrix Questions (Binary YES/NO Toggles)
-const screening = ref({
-  personalData: 'yes',
-  sensitiveData: 'no',
-  automatedDecision: 'yes',
-  systematicMonitoring: 'no',
-  largeScale: 'yes',
-  crossBorder: 'no'
+onMounted(() => {
+  loadQuestions()
 })
-
-// Dynamic Real-time Risk Score Calculation
-const riskScore = computed(() => {
-  let score = 15
-  if (screening.value.personalData === 'yes') score += 15
-  if (screening.value.sensitiveData === 'yes') score += 20
-  if (screening.value.automatedDecision === 'yes') score += 25
-  if (screening.value.systematicMonitoring === 'yes') score += 15
-  if (screening.value.largeScale === 'yes') score += 10
-  if (screening.value.crossBorder === 'yes') score += 10
-  return Math.min(100, score)
-})
-
-const isDpiaRequired = computed(() => riskScore.value >= 60)
-
-const handleNavigateDashboard = () => {
-  router.push('/pm/dashboard')
-}
-
-const handleNavigateAdmin = () => {
-  router.push('/admin')
-}
 
 const handleNavigateModules = () => {
   router.push('/modules')
@@ -76,17 +55,52 @@ const handleLogout = () => {
   router.push('/login')
 }
 
-const handleSaveDraft = () => {
+const handleSaveDraft = async () => {
+  if (currentStep.value === 1 && !assessmentId.value) {
+    if (!title.value || !projectManager.value) {
+      alert("Title and Project Manager are required to create a draft.")
+      return
+    }
+    const res = await dpiaApi.createAssessment({ title: title.value, project_manager: projectManager.value })
+    assessmentId.value = res.id
+  }
+  
+  if (assessmentId.value) {
+    if (currentStep.value === 1) await dpiaApi.saveResponses(assessmentId.value, basicDataResponses.value)
+    if (currentStep.value === 2) await dpiaApi.saveResponses(assessmentId.value, screeningResponses.value)
+    if (currentStep.value === 3) await dpiaApi.saveResponses(assessmentId.value, fullPiaResponses.value)
+  }
   window.alert('DPIA Assessment Draft saved successfully!')
 }
 
-const handleNextStep = () => {
-  if (currentStep.value < 3) {
-    currentStep.value++
-  } else {
-    window.alert('DPIA Assessment submitted successfully for DPO Review!')
-    router.push('/pm/dashboard')
+const handleNextStep = async () => {
+  isLoading.value = true
+  try {
+    if (currentStep.value === 1) {
+      if (!assessmentId.value) {
+        if (!title.value || !projectManager.value) {
+          alert("Title and Project Manager are required to proceed.")
+          isLoading.value = false
+          return
+        }
+        const res = await dpiaApi.createAssessment({ title: title.value, project_manager: projectManager.value })
+        assessmentId.value = res.id
+      }
+      await dpiaApi.saveResponses(assessmentId.value, basicDataResponses.value)
+      currentStep.value = 2
+    } else if (currentStep.value === 2) {
+      await dpiaApi.saveResponses(assessmentId.value, screeningResponses.value)
+      currentStep.value = 3
+    } else {
+      await dpiaApi.saveResponses(assessmentId.value, fullPiaResponses.value)
+      window.alert('DPIA Assessment submitted successfully for DPO Review!')
+      router.push('/pm/dashboard')
+    }
+  } catch (err) {
+    console.error('Error during step transition:', err)
+    window.alert('Failed to save assessment. Please try again.')
   }
+  isLoading.value = false
 }
 
 const handlePrevStep = () => {
@@ -94,405 +108,221 @@ const handlePrevStep = () => {
     currentStep.value--
   }
 }
+
+const renderInput = (question: any, vModelTarget: Record<string, any>) => {
+  if (vModelTarget[question.id] === undefined) {
+    vModelTarget[question.id] = question.answer_type === 'Checkbox' ? [] : ''
+  }
+  return ''
+}
 </script>
 
 <template>
   <div class="dpia-assessment-layout">
-    <!-- Top Header Navigation Bar -->
     <header class="top-navbar">
-      <!-- Left Logo Section -->
       <div class="navbar-brand" @click="handleNavigateModules" title="Back to Modules">
         <img src="/Aegislogo.jpeg" alt="Aegis360 Logo" class="brand-logo-img" />
       </div>
 
-      <!-- Center Search Bar -->
-      <div class="search-container">
-        <div class="search-input-wrapper">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search ERP data..."
-            class="search-input"
-          />
-        </div>
-      </div>
-
-      <!-- Right Action & Profile Section -->
       <div class="navbar-actions">
-        <button type="button" class="notification-btn" title="Notifications">
-          <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-          <span class="notification-dot"></span>
-        </button>
-
         <div class="user-profile-menu" @click="handleLogout" title="Click to Sign Out">
           <div class="user-info">
-            <span class="user-name">{{ authStore.user.name }}</span>
-            <span class="user-role">{{ authStore.user.role }}</span>
+            <span class="user-name">{{ authStore.user?.name || 'Project Manager' }}</span>
+            <span class="user-role">{{ authStore.primaryRole }}</span>
           </div>
           <div class="avatar-container">
-            <img :src="authStore.user.avatar" :alt="authStore.user.name" class="user-avatar" />
+            <img :src="authStore.user?.avatar || 'https://i.pravatar.cc/150?u=pm'" :alt="authStore.user?.name || 'User'" class="user-avatar" />
           </div>
         </div>
       </div>
     </header>
 
-    <!-- Main Container with Left Sidebar & Form Workspace -->
-    <div class="body-container">
-      <!-- Left Sidebar Navigation -->
-      <PmSidebar />
+    <div class="main-body">
+      <PmSidebar active-item="active-dpia" />
 
-      <!-- Main Dedicated Workspace Area -->
-      <main class="main-content">
-        <!-- ============================================ -->
-        <!-- STEP 1: BASIC DETAILS                        -->
-        <!-- ============================================ -->
-        <div v-if="currentStep === 1">
-          <!-- Page Header -->
-          <header class="assessment-header">
-            <div class="header-titles">
-              <h1 class="page-title">New DPIA Assessment</h1>
-              <p class="step-subtitle">Step 1 of 3: Core Project Information</p>
-            </div>
+      <main class="content-area">
+        <div class="wizard-header">
+          <div class="wizard-title-block">
+            <h1>Create DPIA Assessment</h1>
+            <p>Complete the required sections below. Progress is saved automatically.</p>
+          </div>
+          <div class="wizard-actions">
+            <button class="btn-secondary" @click="handleSaveDraft" :disabled="isLoading">Save Draft</button>
+          </div>
+        </div>
 
-            <div class="header-buttons">
-              <button type="button" class="btn-save-draft" @click="handleSaveDraft">
-                SAVE DRAFT
-              </button>
-              <button type="button" class="btn-next-step" @click="handleNextStep">
-                <span>NEXT STEP</span>
-                <svg class="next-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
+        <!-- Sleek Wizard Progress Bar -->
+        <div class="wizard-progress-container">
+          <div class="progress-track">
+            <div class="progress-fill" :style="{ width: ((currentStep - 1) / 2) * 100 + '%' }"></div>
+          </div>
+          <div class="progress-steps">
+            <div :class="['step-node', { active: currentStep >= 1, completed: currentStep > 1 }]">
+              <div class="step-circle">
+                <svg v-if="currentStep > 1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
-              </button>
-            </div>
-          </header>
-
-          <!-- 3-Step Stepper Progress Bar -->
-          <div class="stepper-container">
-            <div class="stepper-track"></div>
-            <div class="stepper-step active">
-              <div class="step-circle">1</div>
-              <span class="step-label">BASIC DETAILS</span>
-            </div>
-            <div class="stepper-step">
-              <div class="step-circle">2</div>
-              <span class="step-label">SCREENING</span>
-            </div>
-            <div class="stepper-step">
-              <div class="step-circle">3</div>
-              <span class="step-label">ASSIGN DPS</span>
-            </div>
-          </div>
-
-          <!-- Form & Guidance Layout Grid -->
-          <div class="assessment-card-container">
-            <div class="assessment-grid">
-              <div class="form-column">
-                <div class="form-block">
-                  <h2 class="block-title">General Information</h2>
-                  <div class="block-divider"></div>
-
-                  <div class="field-group">
-                    <label class="field-label">PROJECT NAME <span class="required-star">*</span></label>
-                    <input v-model="projectName" type="text" placeholder="e.g., Global HRIS Migration" class="field-input" />
-                  </div>
-
-                  <div class="field-grid-2">
-                    <div class="field-group">
-                      <label class="field-label">BUSINESS UNIT</label>
-                      <select v-model="businessUnit" class="field-select">
-                        <option value="" disabled>Select Business Unit...</option>
-                        <option value="hr">Human Resources</option>
-                        <option value="engineering">Core Engineering</option>
-                        <option value="finance">Finance & Accounting</option>
-                        <option value="operations">Global Operations</option>
-                      </select>
-                    </div>
-
-                    <div class="field-group">
-                      <label class="field-label">PROJECT MANAGER</label>
-                      <div class="input-with-icon">
-                        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        <input v-model="projectManager" type="text" placeholder="Search employee directory..." class="field-input icon-padded" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="field-group max-w-sm">
-                    <label class="field-label">ANTICIPATED GO-LIVE DATE</label>
-                    <input v-model="goLiveDate" type="date" class="field-input" />
-                  </div>
-                </div>
-
-                <div class="form-block">
-                  <h2 class="block-title">Processing Scope</h2>
-                  <div class="block-divider"></div>
-
-                  <div class="field-group">
-                    <label class="field-label">PURPOSE OF PROCESSING <span class="required-star">*</span></label>
-                    <textarea v-model="purposeOfProcessing" rows="4" placeholder="Describe the specific goals and intended outcomes of this data processing activity..." class="field-textarea"></textarea>
-                    <p class="field-caption"><span class="info-icon">ⓘ</span> Please be as detailed as possible to aid the screening phase.</p>
-                  </div>
-
-                  <div class="field-group">
-                    <label class="field-label">DATA CATEGORIES INVOLVED</label>
-                    <div class="category-tags-row">
-                      <button v-for="cat in dataCategories" :key="cat.id" type="button" class="tag-pill" :class="{ selected: cat.selected }" @click="toggleCategory(cat)">
-                        <span>{{ cat.label }}</span>
-                        <span class="tag-action-icon">{{ cat.selected ? '×' : '+' }}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <span v-else>1</span>
               </div>
-
-              <div class="guidance-column">
-                <div class="guidance-card">
-                  <div class="guidance-header">
-                    <span class="question-icon">❓</span>
-                    <h3 class="guidance-title">Guidance</h3>
-                  </div>
-                  <p class="guidance-text">
-                    The Basic Details phase is crucial for establishing the preliminary risk profile of the project. Ensure the Purpose of Processing clearly articulates why the data is needed, not just how it will be used.
-                  </p>
-                  <div class="required-fields-box">
-                    <h4 class="required-box-title">REQUIRED FIELDS</h4>
-                    <ul class="required-list">
-                      <li>• Project Name</li>
-                      <li>• Purpose of Processing</li>
-                    </ul>
-                  </div>
-                </div>
+              <span class="step-label">Basic Data</span>
+            </div>
+            
+            <div :class="['step-node', { active: currentStep >= 2, completed: currentStep > 2 }]">
+              <div class="step-circle">
+                <svg v-if="currentStep > 2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span v-else>2</span>
               </div>
+              <span class="step-label">Screening Matrix</span>
+            </div>
+            
+            <div :class="['step-node', { active: currentStep >= 3 }]">
+              <div class="step-circle">
+                <span v-if="currentStep <= 3">3</span>
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <span class="step-label">Full PIA</span>
             </div>
           </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- STEP 2: SCREENING MATRIX (FIGMA SPECIFIED)   -->
-        <!-- ============================================ -->
-        <div v-else-if="currentStep === 2" class="screening-matrix-step">
-          <!-- Module Meta & Header -->
-          <header class="screening-header-row">
-            <div class="meta-left">
-              <span class="meta-tag">MODULE: DATA PROTECTION IMPACT ASSESSMENT • REF: DPIA-2023-084</span>
-              <h1 class="page-title">Screening Matrix</h1>
-            </div>
-
-            <!-- Segmented Sub-Step Progress & Step Counter -->
-            <div class="segmented-progress-box">
-              <div class="segmented-bars">
-                <span class="segment filled"></span>
-                <span class="segment filled"></span>
-                <span class="segment"></span>
-                <span class="segment"></span>
-              </div>
-              <span class="step-count-label">Step 2 of 4</span>
-            </div>
-          </header>
-
-          <!-- 2-Column Screening Workspace -->
-          <div class="screening-grid">
-            <!-- Left Column: Modular Question Cards -->
-            <div class="screening-questions-col">
-              <!-- Block 1: Data Processing Scope -->
-              <div class="matrix-card">
-                <div class="matrix-card-header">
-                  <div class="card-title-group">
-                    <svg class="matrix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
-                      <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
-                      <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
-                    </svg>
-                    <div>
-                      <h2 class="matrix-card-title">Data Processing Scope</h2>
-                      <p class="matrix-card-subtitle">Determine the fundamental nature of the data involved in this project phase.</p>
-                    </div>
-                  </div>
-                  <span class="mandatory-badge">● MANDATORY</span>
-                </div>
-
-                <div class="question-item-box">
-                  <div class="question-info">
-                    <h3 class="question-text">Is personal data processed?</h3>
-                    <p class="question-subtext">Includes names, IP addresses, location data, or any identifiers.</p>
-                  </div>
-                  <div class="toggle-group">
-                    <button type="button" class="btn-toggle" :class="{ active: screening.personalData === 'yes' }" @click="screening.personalData = 'yes'">YES</button>
-                    <button type="button" class="btn-toggle dark-active" :class="{ active: screening.personalData === 'no' }" @click="screening.personalData = 'no'">NO</button>
-                  </div>
-                </div>
-
-                <div class="question-item-box">
-                  <div class="question-info">
-                    <h3 class="question-text">Is sensitive data involved?</h3>
-                    <p class="question-subtext">Special categories under GDPR (e.g., health, biometrics, political opinions).</p>
-                  </div>
-                  <div class="toggle-group">
-                    <button type="button" class="btn-toggle" :class="{ active: screening.sensitiveData === 'yes' }" @click="screening.sensitiveData = 'yes'">YES</button>
-                    <button type="button" class="btn-toggle dark-active" :class="{ active: screening.sensitiveData === 'no' }" @click="screening.sensitiveData = 'no'">NO</button>
-                  </div>
-                </div>
+        <div class="wizard-content card-glass">
+          <!-- Step 1: Basic Data -->
+          <div v-if="currentStep === 1" class="form-section fade-in">
+            <h2 class="section-title">Core Properties</h2>
+            
+            <div class="form-grid">
+              <div class="input-group full-width">
+                <label>Assessment Title <span class="required">*</span></label>
+                <input type="text" v-model="title" class="form-input" placeholder="Enter project or assessment name" />
               </div>
 
-              <!-- Block 2: Algorithmic Impact -->
-              <div class="matrix-card">
-                <div class="matrix-card-header">
-                  <div class="card-title-group">
-                    <svg class="matrix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
-                    <div>
-                      <h2 class="matrix-card-title">Algorithmic Impact</h2>
-                      <p class="matrix-card-subtitle">Evaluate the use of automated systems and profiling mechanisms.</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="question-item-box">
-                  <div class="question-info">
-                    <h3 class="question-text">Automated decision making? <span class="alert-inline-icon">⚠️</span></h3>
-                    <p class="question-subtext">Decisions made without human involvement that have legal effects.</p>
-                  </div>
-                  <div class="toggle-group">
-                    <button type="button" class="btn-toggle alert-red" :class="{ active: screening.automatedDecision === 'yes' }" @click="screening.automatedDecision = 'yes'">YES</button>
-                    <button type="button" class="btn-toggle dark-active" :class="{ active: screening.automatedDecision === 'no' }" @click="screening.automatedDecision = 'no'">NO</button>
-                  </div>
-                </div>
-
-                <div class="question-item-box">
-                  <div class="question-info">
-                    <h3 class="question-text">Systematic monitoring?</h3>
-                    <p class="question-subtext">Large scale monitoring of publicly accessible areas.</p>
-                  </div>
-                  <div class="toggle-group">
-                    <button type="button" class="btn-toggle" :class="{ active: screening.systematicMonitoring === 'yes' }" @click="screening.systematicMonitoring = 'yes'">YES</button>
-                    <button type="button" class="btn-toggle dark-active" :class="{ active: screening.systematicMonitoring === 'no' }" @click="screening.systematicMonitoring = 'no'">NO</button>
-                  </div>
-                </div>
+              <div class="input-group">
+                <label>Project Manager <span class="required">*</span></label>
+                <input type="text" v-model="projectManager" class="form-input" placeholder="Name of Project Manager" />
               </div>
             </div>
 
-            <!-- Right Column: Real-Time Live Assessment Widget & Action Buttons -->
-            <div class="screening-sidebar-col">
-              <!-- Dark Navy Live Assessment Card -->
-              <div class="live-assessment-card">
-                <div class="live-card-header">
-                  <svg class="chart-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                    <line x1="9" y1="9" x2="9" y2="15"></line>
-                    <line x1="15" y1="15" x2="15" y2="11"></line>
-                  </svg>
-                  <span>Live Assessment</span>
-                </div>
-
-                <!-- Circular Risk Arc Gauge -->
-                <div class="risk-gauge-container">
-                  <svg class="gauge-svg" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="38"
-                      fill="none"
-                      :stroke="isDpiaRequired ? '#ef4444' : '#10b981'"
-                      stroke-width="7"
-                      stroke-dasharray="238.7"
-                      :stroke-dashoffset="238.7 - (238.7 * riskScore) / 100"
-                      stroke-linecap="round"
-                      transform="rotate(-90 50 50)"
-                    />
-                  </svg>
-                  <div class="gauge-center-text">
-                    <span class="score-val">{{ riskScore }}</span>
-                    <span class="score-lbl">RISK SCORE</span>
-                  </div>
-                </div>
-
-                <!-- Status Alert Box inside Card -->
-                <div class="status-alert-box" :class="{ 'dpia-required': isDpiaRequired }">
-                  <div class="alert-title-row">
-                    <span class="alert-mark">!</span>
-                    <span class="alert-heading">STATUS</span>
-                  </div>
-                  <h4 class="status-main-label">{{ isDpiaRequired ? 'DPIA REQUIRED' : 'STANDARD SCREENING' }}</h4>
-                  <p class="status-sub-desc">
-                    {{ isDpiaRequired ? 'Automated decision making triggers mandatory assessment under Article 35(3)(a).' : 'Standard risk profile within normal operational limits.' }}
-                  </p>
-                </div>
-
-                <div class="gauge-summary-metrics">
-                  <div class="metric-row">
-                    <span class="m-label">Threshold crossed</span>
-                    <span class="m-value" :class="{ highlight: isDpiaRequired }">{{ isDpiaRequired ? 'YES' : 'NO' }}</span>
-                  </div>
-                  <div class="metric-row">
-                    <span class="m-label">Consultation needed</span>
-                    <span class="m-value dpo-highlight">{{ isDpiaRequired ? 'DPO' : 'None' }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Action Buttons Stack -->
-              <div class="screening-actions-stack">
-                <button type="button" class="btn-sidebar-draft" @click="handleSaveDraft">
-                  Save Draft
-                </button>
-                <button type="button" class="btn-sidebar-next" @click="handleNextStep">
-                  <span>Next Step</span>
-                  <svg class="next-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ============================================ -->
-        <!-- STEP 3: ASSIGN DPS / SUBMISSION              -->
-        <!-- ============================================ -->
-        <div v-else-if="currentStep === 3" class="step3-workspace">
-          <header class="assessment-header">
-            <div class="header-titles">
-              <h1 class="page-title">Assign DPO Reviewer</h1>
-              <p class="step-subtitle">Step 3 of 3: Finalize Assessment & Submit</p>
-            </div>
-            <div class="header-buttons">
-              <button type="button" class="btn-save-draft" @click="handlePrevStep">BACK</button>
-              <button type="button" class="btn-next-step" @click="handleNextStep">SUBMIT FOR DPO REVIEW →</button>
-            </div>
-          </header>
-
-          <div class="assessment-card-container">
-            <div class="dpo-assign-box">
-              <h2 class="block-title">Select Data Protection Officer (DPO)</h2>
-              <p class="guidance-text" style="margin-bottom: 20px;">
-                Based on your high risk score of <strong>{{ riskScore }}</strong>, mandatory DPO consultation is required under GDPR Article 35.
-              </p>
-              
-              <div class="field-group max-w-sm">
-                <label class="field-label">ASSIGNED REVIEWS DPO</label>
-                <select class="field-select">
-                  <option selected>Marcus Vance (Head DPO - Global Compliance)</option>
-                  <option>Elena Rostova (Senior Privacy Counsel)</option>
+            <div v-if="basicDataQuestions.length > 0" class="divider"></div>
+            
+            <h2 class="section-title" v-if="basicDataQuestions.length > 0">Additional Details</h2>
+            <div class="form-grid">
+              <div v-for="q in basicDataQuestions" :key="q.id" class="input-group full-width">
+                {{ renderInput(q, basicDataResponses) }}
+                <label class="q-label">{{ q.question_text }} <span v-if="q.required" class="required">*</span></label>
+                <p v-if="q.guidance" class="field-help">{{ q.guidance }}</p>
+                
+                <input v-if="q.answer_type === 'Short Text'" type="text" class="form-input" v-model="basicDataResponses[q.id]" placeholder="Enter response..." />
+                <textarea v-else-if="q.answer_type === 'Long Text'" class="form-textarea" rows="4" v-model="basicDataResponses[q.id]" placeholder="Enter detailed response..."></textarea>
+                
+                <select v-else-if="q.answer_type === 'Dropdown'" class="form-select" v-model="basicDataResponses[q.id]">
+                  <option disabled value="">Select an option...</option>
+                  <option v-for="opt in q.options" :key="opt" :value="opt">{{ opt }}</option>
                 </select>
+                
+                <div v-else-if="q.answer_type === 'Radio'" class="radio-pill-group">
+                  <label v-for="opt in q.options" :key="opt" :class="['radio-pill', { active: basicDataResponses[q.id] === opt }]">
+                    <input type="radio" :value="opt" v-model="basicDataResponses[q.id]" class="hidden-radio">
+                    {{ opt }}
+                  </label>
+                </div>
               </div>
             </div>
           </div>
+
+          <!-- Step 2: Screening Matrix -->
+          <div v-if="currentStep === 2" class="form-section fade-in">
+            <div class="section-header-box">
+              <h2 class="section-title">Screening Matrix</h2>
+              <p class="section-subtitle">Answer the following questions to determine if a Full PIA is required.</p>
+            </div>
+            
+            <div class="risk-matrix">
+              <div v-for="q in screeningQuestions" :key="q.id" class="matrix-row">
+                {{ renderInput(q, screeningResponses) }}
+                <div class="matrix-question">
+                  <div class="q-text-wrap">
+                    <span class="q-num">{{ q.question_number || 'Q' }}</span>
+                    <h3>{{ q.question_text }}</h3>
+                  </div>
+                  <p v-if="q.guidance" class="q-guide">{{ q.guidance }}</p>
+                </div>
+                <div class="matrix-toggle">
+                  <div class="pill-toggle">
+                    <label :class="['toggle-btn', { 'active-yes': screeningResponses[q.id] === 'Yes' }]">
+                      <input type="radio" value="Yes" v-model="screeningResponses[q.id]" class="hidden-radio" />
+                      Yes
+                    </label>
+                    <label :class="['toggle-btn', { 'active-no': screeningResponses[q.id] === 'No' }]">
+                      <input type="radio" value="No" v-model="screeningResponses[q.id]" class="hidden-radio" />
+                      No
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Full PIA -->
+          <div v-if="currentStep === 3" class="form-section fade-in">
+            <div class="section-header-box">
+              <h2 class="section-title">Full Privacy Impact Assessment</h2>
+              <p class="section-subtitle">Please provide comprehensive details for the full assessment based on the identified risks.</p>
+            </div>
+            
+            <div v-if="fullPiaQuestions.length === 0" class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <p>No questions configured for Full PIA.</p>
+            </div>
+            
+            <div class="form-grid">
+              <div v-for="q in fullPiaQuestions" :key="q.id" class="input-group full-width">
+                {{ renderInput(q, fullPiaResponses) }}
+                <label class="q-label">{{ q.question_text }} <span v-if="q.required" class="required">*</span></label>
+                <p v-if="q.guidance" class="field-help">{{ q.guidance }}</p>
+                
+                <input v-if="q.answer_type === 'Short Text'" type="text" class="form-input" v-model="fullPiaResponses[q.id]" placeholder="Enter response..." />
+                <textarea v-else-if="q.answer_type === 'Long Text'" class="form-textarea" rows="4" v-model="fullPiaResponses[q.id]" placeholder="Enter detailed response..."></textarea>
+                
+                <select v-else-if="q.answer_type === 'Dropdown'" class="form-select" v-model="fullPiaResponses[q.id]">
+                  <option disabled value="">Select an option...</option>
+                  <option v-for="opt in q.options" :key="opt" :value="opt">{{ opt }}</option>
+                </select>
+                
+                <div v-else-if="q.answer_type === 'Radio'" class="radio-pill-group">
+                  <label v-for="opt in q.options" :key="opt" :class="['radio-pill', { active: fullPiaResponses[q.id] === opt }]">
+                    <input type="radio" :value="opt" v-model="fullPiaResponses[q.id]" class="hidden-radio">
+                    {{ opt }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wizard-footer">
+          <button class="btn-back" @click="handlePrevStep" :disabled="currentStep === 1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Back
+          </button>
+          <button class="btn-primary" @click="handleNextStep" :disabled="isLoading">
+            {{ currentStep === 3 ? 'Submit Assessment' : 'Save & Continue' }}
+            <svg v-if="currentStep < 3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
         </div>
       </main>
     </div>
@@ -505,21 +335,23 @@ const handlePrevStep = () => {
   width: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #f8fafc;
+  background-color: #f1f5f9; /* Softer, premium background */
 }
 
 /* Top Navbar */
 .top-navbar {
-  height: 105px;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  height: 90px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
+  padding: 0 40px;
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.02);
 }
 
 .navbar-brand {
@@ -529,78 +361,15 @@ const handlePrevStep = () => {
 }
 
 .brand-logo-img {
-  height: 90px;
+  height: 70px;
   width: auto;
   object-fit: contain;
-}
-
-.search-container {
-  flex: 1;
-  max-width: 480px;
-  margin: 0 40px;
-}
-
-.search-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-icon {
-  position: absolute;
-  left: 16px;
-  width: 18px;
-  height: 18px;
-  color: #94a3b8;
-}
-
-.search-input {
-  width: 100%;
-  height: 44px;
-  padding: 0 18px 0 46px;
-  background-color: #f1f5f9;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  font-family: var(--font-family);
-  font-size: 14px;
-  color: #0f172a;
-  outline: none;
 }
 
 .navbar-actions {
   display: flex;
   align-items: center;
   gap: 24px;
-}
-
-.notification-btn {
-  position: relative;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  cursor: pointer;
-  width: 42px;
-  height: 42px;
-  color: #475569;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bell-icon {
-  width: 20px;
-  height: 20px;
-}
-
-.notification-dot {
-  position: absolute;
-  top: 9px;
-  right: 9px;
-  width: 8px;
-  height: 8px;
-  background-color: #ef4444;
-  border: 2px solid #ffffff;
-  border-radius: 50%;
 }
 
 .user-profile-menu {
@@ -610,6 +379,11 @@ const handlePrevStep = () => {
   cursor: pointer;
   padding: 6px 12px;
   border-radius: 12px;
+  transition: background-color 0.2s;
+}
+
+.user-profile-menu:hover {
+  background-color: #f8fafc;
 }
 
 .user-info {
@@ -645,725 +419,448 @@ const handlePrevStep = () => {
 }
 
 /* Body Container */
-.body-container {
+.main-body {
   flex: 1;
   display: flex;
 }
 
 /* Main Workspace */
-.main-content {
+.content-area {
   flex: 1;
-  padding: 36px 48px;
-  background-color: #f8fafc;
-  overflow-y: auto;
-}
-
-/* Assessment Step 1 Header */
-.assessment-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 28px;
-}
-
-.page-title {
-  font-family: var(--font-family);
-  font-size: 30px;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.02em;
-}
-
-.step-subtitle {
-  font-size: 14px;
-  color: #64748b;
-  margin-top: 4px;
-}
-
-.header-buttons {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.btn-save-draft {
-  height: 42px;
-  padding: 0 20px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font-family: var(--font-family);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #334155;
-  cursor: pointer;
-}
-
-.btn-next-step {
-  height: 42px;
-  padding: 0 22px;
-  background: #0f2942;
-  border: none;
-  border-radius: 8px;
-  font-family: var(--font-family);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #ffffff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.next-arrow {
-  width: 15px;
-  height: 15px;
-}
-
-/* Stepper Bar */
-.stepper-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 36px;
-  padding: 0 10%;
-}
-
-.stepper-track {
-  position: absolute;
-  top: 18px;
-  left: 12%;
-  right: 12%;
-  height: 2px;
-  background-color: #e2e8f0;
-  z-index: 1;
-}
-
-.stepper-step {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.step-circle {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: #e2e8f0;
-  color: #64748b;
-  font-size: 14px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stepper-step.active .step-circle {
-  background-color: #0f2942;
-  color: #ffffff;
-  box-shadow: 0 0 0 4px rgba(15, 41, 66, 0.15);
-}
-
-.step-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #94a3b8;
-}
-
-.stepper-step.active .step-label {
-  color: #0f2942;
-}
-
-/* Form Container */
-.assessment-card-container {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 36px;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
-}
-
-.assessment-grid {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 40px;
-}
-
-.form-column {
+  padding: 40px 60px;
+  max-width: 1100px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 32px;
 }
 
-.form-block {
+/* Header */
+.wizard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.wizard-title-block h1 {
+  font-family: var(--font-family);
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.wizard-title-block p {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.btn-secondary {
+  height: 42px;
+  padding: 0 20px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.02);
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+/* Progress Stepper */
+.wizard-progress-container {
+  position: relative;
+  padding: 0 10%;
+  margin: 10px 0;
+}
+
+.progress-track {
+  position: absolute;
+  top: 18px;
+  left: 14%;
+  right: 14%;
+  height: 4px;
+  background-color: #e2e8f0;
+  border-radius: 2px;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #0d9488;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-steps {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+}
+
+.step-node {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  align-items: center;
+  gap: 12px;
 }
 
-.block-title {
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 2px solid #cbd5e1;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.step-circle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.step-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  transition: color 0.3s;
+}
+
+.step-node.active .step-circle {
+  border-color: #0d9488;
+  background-color: #0d9488;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.15);
+}
+
+.step-node.active .step-label {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.step-node.completed .step-circle {
+  background-color: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+/* Card Container */
+.card-glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.04), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.section-header-box {
+  margin-bottom: 32px;
+}
+
+.section-title {
   font-family: var(--font-family);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: #0f172a;
+  margin-bottom: 6px;
 }
 
-.block-divider {
+.section-subtitle {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.divider {
   height: 1px;
-  background-color: #e2e8f0;
-  margin-top: -6px;
+  background: #e2e8f0;
+  margin: 36px 0;
 }
 
-.field-group {
+/* Form Elements */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+}
+
+.input-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.max-w-sm {
-  max-width: 320px;
+.q-label, .input-group label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1e293b;
 }
 
-.field-label {
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #475569;
-}
-
-.required-star {
+.required {
   color: #ef4444;
+  margin-left: 2px;
 }
 
-.field-input, .field-select, .field-textarea {
+.field-help {
+  font-size: 12.5px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.form-input, .form-select, .form-textarea {
   width: 100%;
   padding: 0 16px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 10px;
   font-family: var(--font-family);
   font-size: 14px;
   color: #0f172a;
   outline: none;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
 }
 
-.field-input {
-  height: 44px;
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
-.field-select {
-  height: 44px;
-  cursor: pointer;
+.form-input, .form-select {
+  height: 46px;
 }
 
-.field-textarea {
-  padding: 14px 16px;
+.form-textarea {
+  padding: 16px;
+  resize: vertical;
 }
 
-.field-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.input-with-icon {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.field-icon {
-  position: absolute;
-  left: 14px;
-  width: 16px;
-  height: 16px;
-  color: #94a3b8;
-}
-
-.icon-padded {
-  padding-left: 40px;
-}
-
-.field-caption {
-  font-size: 12px;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.category-tags-row {
+/* Radio Pill Group */
+.radio-pill-group {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  margin-top: 4px;
 }
 
-.tag-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
+.radio-pill {
+  padding: 10px 20px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 9999px;
-  font-family: var(--font-family);
   font-size: 13px;
-  font-weight: 500;
-  color: #334155;
+  font-weight: 600;
+  color: #475569;
   cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
 }
 
-.tag-pill.selected {
-  background: #ccfbf1;
+.radio-pill:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.radio-pill.active {
+  background: #f0fdfa;
   border-color: #0d9488;
   color: #0f766e;
-  font-weight: 600;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
 }
 
-.guidance-column {
-  border-left: 1px solid #f1f5f9;
-  padding-left: 32px;
+.hidden-radio {
+  display: none;
 }
 
-.guidance-card {
-  background: #f0fdfa;
-  border: 1px solid #ccfbf1;
-  border-radius: 12px;
-  padding: 20px;
+/* Screening Matrix */
+.risk-matrix {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
-.guidance-header {
+.matrix-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.guidance-title {
-  font-family: var(--font-family);
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f766e;
-}
-
-.guidance-text {
-  font-size: 12.5px;
-  color: #334155;
-  line-height: 1.5;
-}
-
-.required-fields-box {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 12px 14px;
-}
-
-.required-box-title {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #64748b;
-  margin-bottom: 6px;
-}
-
-.required-list {
-  list-style: none;
-  font-size: 12px;
-  color: #334155;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* ============================================ */
-/* STEP 2: SCREENING MATRIX STYLING (FIGMA MATCH) */
-/* ============================================ */
-.screening-matrix-step {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.screening-header-row {
-  display: flex;
-  align-items: flex-end;
   justify-content: space-between;
-}
-
-.meta-tag {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #64748b;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.segmented-progress-box {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-}
-
-.segmented-bars {
-  display: flex;
-  gap: 6px;
-}
-
-.segment {
-  width: 32px;
-  height: 5px;
-  background-color: #e2e8f0;
-  border-radius: 4px;
-}
-
-.segment.filled {
-  background-color: #0f2942;
-}
-
-.step-count-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.screening-grid {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 28px;
-}
-
-.screening-questions-col {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.matrix-card {
+  padding: 24px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  padding: 28px;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+  gap: 30px;
 }
 
-.matrix-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 24px;
+.matrix-question {
+  flex: 1;
 }
 
-.card-title-group {
+.q-text-wrap {
   display: flex;
   align-items: flex-start;
   gap: 12px;
 }
 
-.matrix-icon {
-  width: 22px;
-  height: 22px;
-  color: #0d9488;
-  margin-top: 2px;
-}
-
-.matrix-card-title {
-  font-family: var(--font-family);
-  font-size: 19px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.matrix-card-subtitle {
-  font-size: 13px;
-  color: #64748b;
-  margin-top: 2px;
-}
-
-.mandatory-badge {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #334155;
+.q-num {
+  font-size: 12px;
+  font-weight: 800;
+  color: #94a3b8;
   background: #f1f5f9;
-  padding: 4px 10px;
+  padding: 4px 8px;
   border-radius: 6px;
-}
-
-.question-item-box {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 18px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 16px;
-}
-
-.question-item-box:last-child {
-  margin-bottom: 0;
-}
-
-.question-text {
-  font-size: 14.5px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.question-subtext {
-  font-size: 12.5px;
-  color: #64748b;
   margin-top: 2px;
 }
 
-.alert-inline-icon {
+.matrix-question h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.4;
+}
+
+.q-guide {
   font-size: 13px;
+  color: #64748b;
+  margin-top: 8px;
+  margin-left: 36px;
 }
 
-.toggle-group {
+.pill-toggle {
   display: flex;
-  gap: 6px;
-  background: #e2e8f0;
-  padding: 3px;
-  border-radius: 8px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+  gap: 4px;
 }
 
-.btn-toggle {
-  height: 36px;
-  padding: 0 22px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  font-family: var(--font-family);
+.toggle-btn {
+  padding: 8px 24px;
   font-size: 13px;
   font-weight: 700;
-  color: #475569;
+  color: #64748b;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s;
 }
 
-.btn-toggle.active {
+.toggle-btn.active-yes {
+  background: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1);
+}
+
+.toggle-btn.active-no {
   background: #ffffff;
   color: #0f172a;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
 }
 
-.btn-toggle.dark-active.active {
-  background: #0f2942;
-  color: #ffffff;
-}
-
-.btn-toggle.alert-red.active {
-  background: #dc2626;
-  color: #ffffff;
-}
-
-/* Screening Right Column (Live Assessment Widget) */
-.screening-sidebar-col {
+/* Empty State */
+.empty-state {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-
-.live-assessment-card {
-  background: #0a1324;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
   border-radius: 16px;
-  padding: 24px;
-  color: #ffffff;
-  box-shadow: 0 10px 30px rgba(10, 19, 36, 0.3);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  color: #64748b;
+  gap: 12px;
 }
 
-.live-card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  font-size: 15px;
-  font-weight: 700;
+.empty-state svg {
+  width: 48px;
+  height: 48px;
   color: #94a3b8;
 }
 
-.chart-header-icon {
+/* Footer Actions */
+.wizard-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+}
+
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 24px;
+  background: transparent;
+  border: none;
+  font-family: var(--font-family);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.btn-back:hover:not(:disabled) {
+  color: #0f172a;
+}
+
+.btn-back:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-back svg {
   width: 18px;
   height: 18px;
 }
 
-.risk-gauge-container {
-  position: relative;
-  width: 140px;
-  height: 140px;
-  margin: 20px 0;
-}
-
-.gauge-svg {
-  width: 100%;
-  height: 100%;
-}
-
-.gauge-center-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.score-val {
-  font-family: var(--font-family);
-  font-size: 34px;
-  font-weight: 800;
-  color: #ffffff;
-  line-height: 1;
-}
-
-.score-lbl {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #94a3b8;
-  margin-top: 2px;
-}
-
-.status-alert-box {
-  width: 100%;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 12px;
-  padding: 16px;
-  color: #991b1b;
-  margin-bottom: 20px;
-}
-
-.alert-title-row {
+.btn-primary {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-}
-
-.alert-mark {
-  width: 14px;
-  height: 14px;
-  background: #dc2626;
-  color: #ffffff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 900;
-}
-
-.status-main-label {
-  font-family: var(--font-family);
-  font-size: 16px;
-  font-weight: 800;
-  color: #991b1b;
-  margin-top: 4px;
-}
-
-.status-sub-desc {
-  font-size: 11.5px;
-  color: #7f1d1d;
-  line-height: 1.4;
-  margin-top: 4px;
-}
-
-.gauge-summary-metrics {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  padding-top: 14px;
-}
-
-.metric-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-}
-
-.m-label {
-  color: #94a3b8;
-}
-
-.m-value {
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.m-value.highlight {
-  color: #ef4444;
-}
-
-.dpo-highlight {
-  color: #ef4444;
-}
-
-.screening-actions-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.btn-sidebar-draft {
-  width: 100%;
-  height: 44px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  font-family: var(--font-family);
-  font-size: 14px;
-  font-weight: 600;
-  color: #334155;
-  cursor: pointer;
-}
-
-.btn-sidebar-next {
-  width: 100%;
+  gap: 10px;
   height: 48px;
-  background: #030712;
+  padding: 0 32px;
+  background: #0d9488;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-family: var(--font-family);
   font-size: 14.5px;
-  font-weight: 600;
+  font-weight: 700;
   color: #ffffff;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
+  transition: all 0.2s;
 }
 
-.next-icn {
-  width: 16px;
-  height: 16px;
+.btn-primary:hover:not(:disabled) {
+  background: #0f766e;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.3);
 }
 
-@media (max-width: 1024px) {
-  .screening-grid {
-    grid-template-columns: 1fr;
-  }
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-primary svg {
+  width: 18px;
+  height: 18px;
 }
 </style>

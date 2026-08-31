@@ -69,7 +69,7 @@ def create_assessment():
         title=title,
         project_manager=pm,
         status="Draft",
-        created_by=g.user.id
+        created_by=g.current_user.id
     )
 
     db.session.add(assessment)
@@ -171,6 +171,44 @@ def create_question():
     
     return jsonify({"message": "Question created", "id": q.id}), 201
 
+@dpia_bp.put("/questions/<int:question_id>")
+@require_auth
+@require_role("DPO")
+def update_question(question_id):
+    q = DPIAQuestion.query.get(question_id)
+    if not q:
+        return jsonify({"error": "Question not found"}), 404
+        
+    data = request.get_json() or {}
+    
+    # Update fields if provided
+    if "section" in data: q.section = data["section"]
+    if "section_title" in data: q.section_title = data["section_title"]
+    if "question_number" in data: q.question_number = data["question_number"]
+    if "question_text" in data: q.question_text = data["question_text"]
+    if "guidance" in data: q.guidance = data["guidance"]
+    if "answer_type" in data: q.answer_type = data["answer_type"]
+    if "options" in data: q.options = data["options"]
+    if "required" in data: q.required = data["required"]
+    if "display_order" in data: q.display_order = data["display_order"]
+    if "is_active" in data: q.is_active = data["is_active"]
+    
+    db.session.commit()
+    return jsonify({"message": "Question updated"}), 200
+
+@dpia_bp.delete("/questions/<int:question_id>")
+@require_auth
+@require_role("DPO")
+def delete_question(question_id):
+    q = DPIAQuestion.query.get(question_id)
+    if not q:
+        return jsonify({"error": "Question not found"}), 404
+        
+    # Soft delete
+    q.is_active = False
+    db.session.commit()
+    return jsonify({"message": "Question deleted"}), 200
+
 
 # ============================================================
 # RESPONSES
@@ -204,14 +242,14 @@ def save_responses(assessment_id):
         resp = DPIAResponse.query.filter_by(assessment_id=assessment_id, question_id=q_id).first()
         if resp:
             resp.answer = answer
-            resp.answered_by = g.user.id
+            resp.answered_by = g.current_user.id
             resp.answered_at = datetime.now(timezone.utc)
         else:
             resp = DPIAResponse(
                 assessment_id=assessment_id,
                 question_id=q_id,
                 answer=answer,
-                answered_by=g.user.id,
+                answered_by=g.current_user.id,
                 answered_at=datetime.now(timezone.utc)
             )
             db.session.add(resp)

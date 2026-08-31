@@ -8,15 +8,15 @@ const authStore = useAuthStore()
 const searchQuery = ref('')
 
 const handleDpiaClick = () => {
-  const role = authStore.user.role
-  if (role === 'System Admin') {
-    router.push('/pm/dashboard') // Admin can view the PM perspective of DPIAs
-  } else if (role === 'Project Manager') {
-    router.push('/pm/dashboard')
-  } else if (role === 'DPO') {
+  const role = authStore.primaryRole
+  if (role === 'DPO') {
     router.push('/dpo/dashboard')
+  } else if (role === 'PM') {
+    router.push('/pm/dashboard')
+  } else if (role === 'System Administrator') {
+    router.push('/admin/dashboard')
   } else {
-    router.push('/pm/dashboard') // default fallback
+    router.push('/modules')
   }
 }
 
@@ -70,7 +70,7 @@ const handleLogout = () => {
         <div class="user-profile-menu" @click="handleLogout" title="Click to Sign Out">
           <div class="user-info">
             <span class="user-name">{{ authStore.user.name }}</span>
-            <span class="user-role">{{ authStore.user.role }}</span>
+            <span class="user-role">{{ authStore.primaryRole }}</span>
           </div>
           <div class="avatar-container">
             <img :src="authStore.user.avatar" :alt="authStore.user.name" class="user-avatar" />
@@ -129,7 +129,7 @@ const handleLogout = () => {
             </div>
 
             <!-- Active System Administration Module Card -->
-            <div v-if="authStore.user.role === 'System Admin'" class="module-card admin-card" @click="handleAdminClick">
+            <div v-if="authStore.primaryRole === 'System Administrator'" class="module-card admin-card" @click="handleAdminClick">
               <div class="corner-ribbon admin-ribbon"></div>
 
               <div class="card-inner">

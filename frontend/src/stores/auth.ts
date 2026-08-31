@@ -1,74 +1,134 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { authApi, saveToken, clearToken, getToken } from '@/services/api'
 
 export interface UserProfile {
+  id: string
   name: string
-  role: string
-  avatar: string
+  firstName: string
+  lastName: string
   email: string
+  roles: string[]
+  permissions: string[]
+  avatar: string
+}
+
+// Default avatar per role
+const ROLE_AVATARS: Record<string, string> = {
+  'DPO': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+  'PM': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+  'System Administrator': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+  'Approver': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+}
+
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80'
+
+const EMPTY_USER: UserProfile = {
+  id: '',
+  name: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  roles: [],
+  permissions: [],
+  avatar: DEFAULT_AVATAR,
 }
 
 export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(false)
-  const user = ref<UserProfile>({
-    name: 'Guest User',
-    role: 'Guest',
-    email: '',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80'
-  })
+  const isLoading = ref(false)
+  const user = ref<UserProfile>({ ...EMPTY_USER })
 
-  // Mock roles mapped by email for easy testing
-  const MOCK_USERS: Record<string, Partial<UserProfile>> = {
-    'admin@aegis360.com': {
-      name: 'Executive Admin',
-      role: 'System Admin',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80'
-    },
-    'pm@aegis360.com': {
-      name: 'Project Manager',
-      role: 'Project Manager',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'
-    },
-    'dpo@aegis360.com': {
-      name: 'Data Protection Officer',
-      role: 'DPO',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-    },
-    'approver@aegis360.com': {
-      name: 'System Approver',
-      role: 'Approver',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
+  // ─── Computed helpers ─────────────────────────────────────────────────────
+
+  /** Primary role is the first role returned by the backend */
+  const primaryRole = computed(() => user.value.roles[0] ?? '')
+
+  const hasRole = (role: string) => user.value.roles.includes(role)
+  const hasPermission = (permission: string) => user.value.permissions.includes(permission)
+
+  // ─── Session Hydration ────────────────────────────────────────────────────
+
+  /**
+   * On app startup, check if a JWT is stored in localStorage.
+   * If so, reconstruct the user session from the token payload
+   * (we store the user metadata alongside the token).
+   */
+  const hydrateFromStorage = () => {
+    const token = getToken()
+    const storedUser = localStorage.getItem('aegis_user')
+
+    if (token && storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser) as UserProfile
+        user.value = parsed
+        isAuthenticated.value = true
+      } catch {
+        // Corrupt storage — clear it
+        clearToken()
+        localStorage.removeItem('aegis_user')
+      }
     }
   }
 
-  const login = (email: string) => {
-    const foundUser = MOCK_USERS[email.toLowerCase()]
-    if (foundUser) {
-      user.value = {
-        ...user.value,
-        ...foundUser,
-        email: email
+  // ─── Actions ──────────────────────────────────────────────────────────────
+
+  /**
+   * Authenticate against the real Flask backend.
+   * Returns the primary role string so the caller can redirect appropriately.
+   */
+  const login = async (email: string): Promise<string> => {
+    isLoading.value = true
+    try {
+      const response = await authApi.mockLogin(email)
+
+      // Persist the JWT
+      saveToken(response.access_token)
+
+      // Derive display name and avatar
+      const primaryRoleName = response.roles[0] ?? 'User'
+      const avatar = ROLE_AVATARS[primaryRoleName] ?? DEFAULT_AVATAR
+      const fullName = `${response.user.first_name} ${response.user.last_name}`
+
+      const profile: UserProfile = {
+        id: response.user.id,
+        name: fullName,
+        firstName: response.user.first_name,
+        lastName: response.user.last_name,
+        email: response.user.email,
+        roles: response.roles,
+        permissions: response.permissions,
+        avatar,
       }
+
+      user.value = profile
       isAuthenticated.value = true
-      return true
+
+      // Persist user metadata for page-refresh hydration
+      localStorage.setItem('aegis_user', JSON.stringify(profile))
+
+      return primaryRoleName
+    } finally {
+      isLoading.value = false
     }
-    return false
   }
 
   const logout = () => {
+    clearToken()
+    localStorage.removeItem('aegis_user')
     isAuthenticated.value = false
-    user.value = {
-      name: 'Guest User',
-      role: 'Guest',
-      email: '',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80'
-    }
+    user.value = { ...EMPTY_USER }
   }
 
   return {
     isAuthenticated,
+    isLoading,
     user,
+    primaryRole,
+    hasRole,
+    hasPermission,
     login,
-    logout
+    logout,
+    hydrateFromStorage,
   }
 })

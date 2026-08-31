@@ -10,29 +10,35 @@ const isLoading = ref(false)
 const email = ref('')
 const errorMessage = ref('')
 
-const handleLogin = () => {
+const ROLE_ROUTES: Record<string, string> = {
+  'System Administrator': '/admin/dashboard',
+  'DPO': '/modules',
+  'PM': '/modules',
+  'Approver': '/modules',
+}
+
+const handleLogin = async () => {
   if (!email.value) {
     errorMessage.value = 'Please enter an email address.'
     return
   }
-  
+
   isLoading.value = true
   errorMessage.value = ''
-  
-  // Simulate network delay
-  setTimeout(() => {
-    isLoading.value = false
-    const success = authStore.login(email.value)
-    if (success) {
-      if (authStore.user.role === 'System Admin') {
-        router.push('/admin/dashboard')
-      } else {
-        router.push('/modules')
-      }
+
+  try {
+    const primaryRole = await authStore.login(email.value)
+    const route = ROLE_ROUTES[primaryRole] ?? '/modules'
+    router.push(route)
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      errorMessage.value = err.message
     } else {
-      errorMessage.value = 'Invalid email. Use admin@aegis360.com or pm@aegis360.com'
+      errorMessage.value = 'Login failed. Please check your email and try again.'
     }
-  }, 600)
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const handleHelpClick = () => {

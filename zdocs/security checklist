@@ -22,6 +22,8 @@
 22. Data-level authorization
 
 Implemented
-1. RBAC
-2. Data-level authorization
+21. RBAC
+22. Data-level authorization
+3. Hide Api Keys
+4. Use Public DB key
 
