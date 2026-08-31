@@ -56,12 +56,6 @@ class DPIAFullPIA(db.Model):
         back_populates="full_pia"
     )
 
-    responses = db.relationship(
-        "DPIAFullPIAResponse",
-        back_populates="full_pia",
-        cascade="all, delete-orphan"
-    )
-
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)

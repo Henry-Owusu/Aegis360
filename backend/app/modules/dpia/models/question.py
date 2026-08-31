@@ -3,8 +3,8 @@ import uuid
 from app.extensions.database import db
 
 
-class DPIAFullPIAQuestion(db.Model):
-    __tablename__ = "dpia_full_pia_questions"
+class DPIAQuestion(db.Model):
+    __tablename__ = "dpia_questions"
 
     id = db.Column(
         db.String(36),
@@ -12,11 +12,13 @@ class DPIAFullPIAQuestion(db.Model):
         default=lambda: str(uuid.uuid4())
     )
 
+    # Can be 'basic_data', 'screening', 'full_pia'
     section = db.Column(
-        db.Integer,
+        db.String(50),
         nullable=False
     )
 
+    # Re-using section_title for the internal grouping within the section
     section_title = db.Column(
         db.String(255),
         nullable=False
@@ -49,13 +51,13 @@ class DPIAFullPIAQuestion(db.Model):
 
     required = db.Column(
         db.Boolean,
-        nullable=False,
-        default=False
+        default=True
     )
 
     display_order = db.Column(
         db.Integer,
-        nullable=False
+        nullable=False,
+        default=0
     )
 
     conditional_logic = db.Column(
@@ -65,15 +67,17 @@ class DPIAFullPIAQuestion(db.Model):
 
     is_active = db.Column(
         db.Boolean,
-        nullable=False,
         default=True
     )
 
     responses = db.relationship(
-        "DPIAFullPIAResponse",
-        back_populates="question"
+        "DPIAResponse",
+        backref="question"
     )
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def __repr__(self):
+        return f"<DPIAQuestion {self.section}:{self.question_number} - {self.question_text[:20]}>"

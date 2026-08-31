@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from app.extensions.database import db
 
 
-class DPIAFullPIAResponse(db.Model):
-    __tablename__ = "dpia_full_pia_responses"
+class DPIAResponse(db.Model):
+    __tablename__ = "dpia_responses"
 
     id = db.Column(
         db.String(36),
@@ -14,15 +14,15 @@ class DPIAFullPIAResponse(db.Model):
         default=lambda: str(uuid.uuid4())
     )
 
-    full_pia_id = db.Column(
+    assessment_id = db.Column(
         db.String(36),
-        db.ForeignKey("dpia_full_pias.id"),
+        db.ForeignKey("dpia_assessments.id"),
         nullable=False
     )
 
     question_id = db.Column(
         db.String(36),
-        db.ForeignKey("dpia_full_pia_questions.id"),
+        db.ForeignKey("dpia_questions.id"),
         nullable=False
     )
 
@@ -53,16 +53,6 @@ class DPIAFullPIAResponse(db.Model):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
-    )
-
-    full_pia = db.relationship(
-        "DPIAFullPIA",
-        back_populates="responses"
-    )
-
-    question = db.relationship(
-        "DPIAFullPIAQuestion",
-        back_populates="responses"
     )
 
     def __init__(self, **kwargs):

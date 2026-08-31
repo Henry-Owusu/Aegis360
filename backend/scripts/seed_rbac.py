@@ -209,6 +209,30 @@ def seed_role_permissions(roles, permissions):
         role.permissions = list(desired_permissions)
 
 
+def seed_users(roles):
+    """Assign roles to the mock users that the identity provider knows about."""
+    from app.modules.users.models import User
+
+    USER_ROLES = {
+        "pm@aegis360.com":       "PM",
+        "dpo@aegis360.local":    "DPO",
+        "dpo@aegis360.com":      "DPO",
+        "admin@aegis360.com":    "System Administrator",
+        "approver@aegis360.com": "Approver",
+        "auditor@aegis360.com":  "Auditor",
+    }
+
+    for email, role_name in USER_ROLES.items():
+        user = User.query.filter_by(email=email).first()
+        if user:
+            role = roles.get(role_name)
+            if role and role not in user.roles:
+                user.roles.append(role)
+                print(f"  Assigned '{role_name}' to {email}")
+        else:
+            print(f"  [SKIP] User not found: {email} — log in once to create them")
+
+
 def main():
     app = create_app()
 
@@ -217,7 +241,9 @@ def main():
         permissions = seed_permissions()
 
         seed_role_permissions(roles, permissions)
+        db.session.commit()
 
+        seed_users(roles)
         db.session.commit()
 
         print("RBAC seed completed successfully.")
@@ -227,6 +253,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-

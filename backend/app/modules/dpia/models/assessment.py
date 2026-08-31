@@ -15,26 +15,11 @@ class DPIAAssessment(db.Model):
         default=lambda: str(uuid.uuid4())
     )
 
-    # BASIC DATA
-
+    # Core System Data
+    
     project_manager = db.Column(
         db.String(255),
         nullable=False
-    )
-
-    department_function_agency = db.Column(
-        db.String(255),
-        nullable=True
-    )
-
-    area_ministry = db.Column(
-        db.String(255),
-        nullable=True
-    )
-
-    region = db.Column(
-        db.String(255),
-        nullable=True
     )
 
     title = db.Column(
@@ -42,53 +27,10 @@ class DPIAAssessment(db.Model):
         nullable=False
     )
 
-    nature_of_change = db.Column(
-        db.JSON,
-        nullable=False
-    )
-
-    other_nature_of_change = db.Column(
-        db.String(500),
-        nullable=True
-    )
-
-    description = db.Column(
-        db.Text,
-        nullable=True
-    )
-
-    implementation_timescales = db.Column(
-        db.Text,
-        nullable=True
-    )
-
-    # WORKFLOW
-
     status = db.Column(
         db.String(50),
         nullable=False,
-        default="draft"
-    )
-
-    dpo_review_decision = db.Column(
-        db.String(50),
-        nullable=True
-    )
-
-    dpo_review_comment = db.Column(
-        db.Text,
-        nullable=True
-    )
-
-    dpo_reviewed_by = db.Column(
-        db.String(36),
-        db.ForeignKey("users.id"),
-        nullable=True
-    )
-
-    dpo_reviewed_at = db.Column(
-        db.DateTime(timezone=True),
-        nullable=True
+        default="Draft"
     )
 
     created_by = db.Column(
@@ -110,19 +52,17 @@ class DPIAAssessment(db.Model):
         onupdate=lambda: datetime.now(timezone.utc)
     )
 
-    # RELATIONSHIPS
-
-    screening = db.relationship(
-        "DPIAScreening",
-        back_populates="assessment",
-        uselist=False,
-        cascade="all, delete-orphan"
-    )
-
+    # Relationships
     full_pia = db.relationship(
         "DPIAFullPIA",
         back_populates="assessment",
         uselist=False,
+        cascade="all, delete-orphan"
+    )
+    
+    responses = db.relationship(
+        "DPIAResponse",
+        backref="assessment",
         cascade="all, delete-orphan"
     )
 

@@ -1,6 +1,6 @@
 from app import create_app
 from app.extensions.database import db
-from app.modules.dpia.models.full_pia_question import DPIAFullPIAQuestion
+from app.modules.dpia.models.question import DPIAQuestion
 
 
 QUESTIONS = [
@@ -896,21 +896,35 @@ def seed_questions():
     created = 0
     updated = 0
 
-    for question_data in QUESTIONS:
-        question = DPIAFullPIAQuestion.query.filter_by(
-            question_number=question_data["question_number"]
+    for q in QUESTIONS:
+        existing_question = DPIAQuestion.query.filter_by(
+            section="full_pia",
+            question_number=q["question_number"]
         ).first()
 
-        if question:
-            for key, value in question_data.items():
-                setattr(question, key, value)
-
+        if existing_question:
+            existing_question.question_text = q["question_text"]
+            existing_question.guidance = q.get("guidance")
+            existing_question.answer_type = q["answer_type"]
+            existing_question.options = q.get("options")
+            existing_question.required = q.get("required", True)
+            existing_question.conditional_logic = q.get("conditional_logic")
+            existing_question.display_order = q["display_order"]
             updated += 1
-
         else:
-            question = DPIAFullPIAQuestion(**question_data)
-            db.session.add(question)
-
+            new_question = DPIAQuestion(
+                section="full_pia",
+                section_title=q["section_title"],
+                question_number=q["question_number"],
+                question_text=q["question_text"],
+                guidance=q.get("guidance"),
+                answer_type=q["answer_type"],
+                options=q.get("options"),
+                required=q.get("required", True),
+                conditional_logic=q.get("conditional_logic"),
+                display_order=q["display_order"]
+            )
+            db.session.add(new_question)
             created += 1
 
     db.session.commit()
