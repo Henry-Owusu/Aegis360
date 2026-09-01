@@ -42,7 +42,15 @@ const handleCreateAssessment = () => {
       <!-- Center Search Bar -->
       <div class="search-container">
         <div class="search-input-wrapper">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
@@ -59,7 +67,15 @@ const handleCreateAssessment = () => {
       <div class="navbar-actions">
         <!-- Notification Bell -->
         <button type="button" class="notification-btn" title="Notifications">
-          <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            class="bell-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
@@ -92,12 +108,21 @@ const handleCreateAssessment = () => {
             <span class="pm-tag">PROJECT MANAGER DASHBOARD</span>
             <h1 class="pm-title">System Status Optimal</h1>
             <p class="pm-desc">
-              You have pending tasks requiring attention. Your current privacy assessment pipeline indicates a bottleneck in DPO reviews.
+              You have pending tasks requiring attention. Your current privacy assessment pipeline
+              indicates a bottleneck in DPO reviews.
             </p>
           </div>
           <div class="pm-hero-right">
             <button type="button" class="add-assessment-btn" @click="handleCreateAssessment">
-              <svg class="plus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                class="plus-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
@@ -152,7 +177,9 @@ const handleCreateAssessment = () => {
                   <span class="metric-label">RETURNED FOR FEEDBACK</span>
                   <div class="metric-icon-box alert-box">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
-                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                      <path
+                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                      ></path>
                       <line x1="12" y1="9" x2="12" y2="13"></line>
                       <line x1="12" y1="17" x2="12.01" y2="17"></line>
                     </svg>
@@ -177,7 +204,11 @@ const handleCreateAssessment = () => {
                 <div class="task-row">
                   <div class="task-left">
                     <div class="task-thumb-box">
-                      <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&auto=format&fit=crop&q=80" alt="Building thumbnail" class="task-thumb-img" />
+                      <img
+                        src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&auto=format&fit=crop&q=80"
+                        alt="Building thumbnail"
+                        class="task-thumb-img"
+                      />
                       <span class="alert-icon-badge">!</span>
                     </div>
                     <div class="task-info">
@@ -188,7 +219,11 @@ const handleCreateAssessment = () => {
                       </div>
                     </div>
                   </div>
-                  <button type="button" class="task-btn primary-task-btn" @click="handleStartPhoenix">
+                  <button
+                    type="button"
+                    class="task-btn primary-task-btn"
+                    @click="handleStartPhoenix"
+                  >
                     Start
                   </button>
                 </div>
@@ -198,7 +233,9 @@ const handleCreateAssessment = () => {
                   <div class="task-left">
                     <div class="task-icon-box comment-box">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        <path
+                          d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        ></path>
                       </svg>
                     </div>
                     <div class="task-info">
@@ -209,7 +246,11 @@ const handleCreateAssessment = () => {
                       </div>
                     </div>
                   </div>
-                  <button type="button" class="task-btn secondary-task-btn" @click="handleViewOrion">
+                  <button
+                    type="button"
+                    class="task-btn secondary-task-btn"
+                    @click="handleViewOrion"
+                  >
                     View
                   </button>
                 </div>
@@ -261,14 +302,7 @@ const handleCreateAssessment = () => {
               <div class="donut-chart-container">
                 <svg class="donut-svg" viewBox="0 0 100 100">
                   <!-- Background Track Ring -->
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#e0f2fe"
-                    stroke-width="9"
-                  />
+                  <circle cx="50" cy="50" r="40" fill="none" stroke="#e0f2fe" stroke-width="9" />
                   <!-- Progress Segment Ring (94% = 236 out of 251 circumference) -->
                   <circle
                     cx="50"
@@ -318,7 +352,8 @@ const handleCreateAssessment = () => {
                       <strong>DPO Marcus Vance</strong> reviewed Project Orion.
                     </p>
                     <div class="quote-box">
-                      "Please clarify section 4 regarding data retention periods before final approval."
+                      "Please clarify section 4 regarding data retention periods before final
+                      approval."
                     </div>
                   </div>
                 </div>
@@ -328,9 +363,7 @@ const handleCreateAssessment = () => {
                   <div class="timeline-dot gray"></div>
                   <div class="timeline-content">
                     <span class="timeline-time">YESTERDAY</span>
-                    <p class="timeline-desc">
-                      System generated weekly compliance digest.
-                    </p>
+                    <p class="timeline-desc">System generated weekly compliance digest.</p>
                   </div>
                 </div>
               </div>

@@ -12,9 +12,9 @@ const errorMessage = ref('')
 
 const ROLE_ROUTES: Record<string, string> = {
   'System Administrator': '/admin/dashboard',
-  'DPO': '/modules',
-  'PM': '/modules',
-  'Approver': '/modules',
+  DPO: '/modules',
+  PM: '/modules',
+  Approver: '/modules',
 }
 
 const handleLogin = async () => {
@@ -67,30 +67,33 @@ const handleHelpClick = () => {
           <div class="login-form">
             <div class="input-group">
               <label for="email">Enterprise Email</label>
-              <input 
-                id="email" 
-                v-model="email" 
-                type="email" 
-                placeholder="e.g. pm@aegis360.com" 
+              <input
+                id="email"
+                v-model="email"
+                type="email"
+                placeholder="e.g. pm@aegis360.com"
                 @keyup.enter="handleLogin"
               />
             </div>
-            
+
             <p v-if="errorMessage" class="error-msg">{{ errorMessage }}</p>
 
-            <button
-              type="button"
-              class="sso-button"
-              :disabled="isLoading"
-              @click="handleLogin"
-            >
+            <button type="button" class="sso-button" :disabled="isLoading" @click="handleLogin">
               <span v-if="isLoading" class="spinner-container">
                 <span class="spinner"></span>
                 <span>Authenticating...</span>
               </span>
               <template v-else>
                 <span class="button-text">Sign In</span>
-                <svg class="button-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                  class="button-arrow"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
                   <path d="M5 12h14"></path>
                   <path d="m12 5 7 7-7 7"></path>
                 </svg>
@@ -100,7 +103,15 @@ const handleHelpClick = () => {
 
           <!-- Enterprise SSO Security Badge -->
           <div class="sso-trust-badge">
-            <svg class="lock-shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              class="lock-shield-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
@@ -110,16 +121,22 @@ const handleHelpClick = () => {
           <!-- Card Footer -->
           <footer class="card-footer">
             <div class="security-info">
-              <svg class="shield-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                class="shield-check-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                 <polyline points="9 12 11 14 15 10"></polyline>
               </svg>
               <span>256-bit Encrypted</span>
             </div>
 
-            <a href="#help" class="help-link" @click.prevent="handleHelpClick">
-              Need Help?
-            </a>
+            <a href="#help" class="help-link" @click.prevent="handleHelpClick"> Need Help? </a>
           </footer>
         </div>
       </div>
@@ -136,8 +153,9 @@ const handleHelpClick = () => {
   align-items: center;
   justify-content: center;
   background-color: #f8fafc;
-  background-image: radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.06) 0px, transparent 50%),
-                    radial-gradient(at 100% 100%, rgba(15, 23, 42, 0.08) 0px, transparent 50%);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.06) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(15, 23, 42, 0.08) 0px, transparent 50%);
   overflow: hidden;
   padding: 24px 16px;
 }
@@ -156,7 +174,7 @@ const handleHelpClick = () => {
   inset: 0;
   background-image: radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px);
   background-size: 28px 28px;
-  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 80%);
+  mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 80%);
   opacity: 0.6;
 }
 
@@ -212,10 +230,14 @@ const handleHelpClick = () => {
   background: #ffffff;
   border-radius: 20px;
   border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.09), 0 0 1px rgba(15, 23, 42, 0.08);
+  box-shadow:
+    0 25px 50px -12px rgba(15, 23, 42, 0.09),
+    0 0 1px rgba(15, 23, 42, 0.08);
   overflow: hidden;
   position: relative;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .card-accent-bar {
@@ -278,7 +300,9 @@ const handleHelpClick = () => {
   background-color: #ffffff;
   border-color: #94a3b8;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.12), 0 2px 4px rgba(15, 23, 42, 0.04);
+  box-shadow:
+    0 8px 20px -4px rgba(15, 23, 42, 0.12),
+    0 2px 4px rgba(15, 23, 42, 0.04);
 }
 
 .sso-button:hover:not(:disabled) .button-arrow {
@@ -316,7 +340,9 @@ const handleHelpClick = () => {
   width: 18px;
   height: 18px;
   color: #64748b;
-  transition: transform 0.2s ease, color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
 }
 
 /* Trust Badge */
@@ -376,8 +402,6 @@ const handleHelpClick = () => {
   color: #0f766e;
   text-decoration: underline;
 }
-
-
 
 /* Form Elements */
 .login-form {

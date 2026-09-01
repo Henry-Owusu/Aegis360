@@ -35,7 +35,8 @@ const systemUsers = ref<SystemUser[]>([
     authSource: 'Microsoft Entra ID',
     status: 'Active',
     lastLogin: '2 mins ago',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+    avatar:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
   },
   {
     id: 'USR-002',
@@ -46,7 +47,8 @@ const systemUsers = ref<SystemUser[]>([
     authSource: 'Microsoft Entra ID',
     status: 'Active',
     lastLogin: '1 hour ago',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80'
+    avatar:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
   },
   {
     id: 'USR-003',
@@ -57,7 +59,8 @@ const systemUsers = ref<SystemUser[]>([
     authSource: 'Microsoft Entra ID',
     status: 'Active',
     lastLogin: '3 hours ago',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80'
+    avatar:
+      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
   },
   {
     id: 'USR-004',
@@ -68,7 +71,8 @@ const systemUsers = ref<SystemUser[]>([
     authSource: 'Microsoft Entra ID',
     status: 'Active',
     lastLogin: 'Yesterday',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80'
+    avatar:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
   },
   {
     id: 'USR-005',
@@ -79,15 +83,17 @@ const systemUsers = ref<SystemUser[]>([
     authSource: 'Microsoft Entra ID',
     status: 'Pending',
     lastLogin: 'Never',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80'
-  }
+    avatar:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+  },
 ])
 
 const filteredUsers = computed(() => {
-  return systemUsers.value.filter(u => {
-    const matchesSearch = u.name.toLowerCase().includes(userSearchQuery.value.toLowerCase()) ||
-                          u.email.toLowerCase().includes(userSearchQuery.value.toLowerCase()) ||
-                          u.department.toLowerCase().includes(userSearchQuery.value.toLowerCase())
+  return systemUsers.value.filter((u) => {
+    const matchesSearch =
+      u.name.toLowerCase().includes(userSearchQuery.value.toLowerCase()) ||
+      u.email.toLowerCase().includes(userSearchQuery.value.toLowerCase()) ||
+      u.department.toLowerCase().includes(userSearchQuery.value.toLowerCase())
     const matchesRole = selectedRoleFilter.value === 'ALL' || u.role === selectedRoleFilter.value
     return matchesSearch && matchesRole
   })
@@ -112,7 +118,7 @@ const auditLogs = ref<AuditLog[]>([
     action: 'Modified Risk Matrix Screening Thresholds',
     module: 'DPIA Engine',
     ipAddress: '192.168.1.104',
-    severity: 'Warning'
+    severity: 'Warning',
   },
   {
     id: 'LOG-8801',
@@ -121,7 +127,7 @@ const auditLogs = ref<AuditLog[]>([
     action: 'Approved DPIA Assessment for Project Phoenix',
     module: 'DPIA Module',
     ipAddress: '10.0.4.12',
-    severity: 'Info'
+    severity: 'Info',
   },
   {
     id: 'LOG-8800',
@@ -130,7 +136,7 @@ const auditLogs = ref<AuditLog[]>([
     action: 'Microsoft Entra ID SSO Token Renewal Success',
     module: 'Authentication',
     ipAddress: 'Internal System',
-    severity: 'Info'
+    severity: 'Info',
   },
   {
     id: 'LOG-8799',
@@ -139,8 +145,8 @@ const auditLogs = ref<AuditLog[]>([
     action: 'Failed Login Attempt (MFA Invalid Token)',
     module: 'Authentication',
     ipAddress: '198.51.100.42',
-    severity: 'Critical'
-  }
+    severity: 'Critical',
+  },
 ])
 
 // System Configuration State
@@ -178,7 +184,13 @@ const handleLogout = () => {
 
       <div class="search-container">
         <div class="search-input-wrapper">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
@@ -193,7 +205,13 @@ const handleLogout = () => {
 
       <div class="navbar-actions">
         <button type="button" class="notification-btn" title="Notifications">
-          <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="bell-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
@@ -220,7 +238,13 @@ const handleLogout = () => {
           <h3 class="group-title">CORE OPERATIONS</h3>
           <nav class="sidebar-nav">
             <button type="button" class="nav-btn" @click="router.push('/dpia')">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <rect x="3" y="3" width="7" height="7"></rect>
                 <rect x="14" y="3" width="7" height="7"></rect>
                 <rect x="14" y="14" width="7" height="7"></rect>
@@ -230,14 +254,26 @@ const handleLogout = () => {
             </button>
 
             <button type="button" class="nav-btn" @click="router.push('/dpia/new')">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
               </svg>
               <span>DPIA Module</span>
             </button>
 
             <button type="button" class="nav-btn">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
               </svg>
@@ -245,7 +281,13 @@ const handleLogout = () => {
             </button>
 
             <button type="button" class="nav-btn">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <line x1="18" y1="20" x2="18" y2="10"></line>
                 <line x1="12" y1="20" x2="12" y2="4"></line>
                 <line x1="6" y1="20" x2="6" y2="14"></line>
@@ -255,9 +297,17 @@ const handleLogout = () => {
 
             <!-- Active Administration Tab -->
             <button type="button" class="nav-btn active">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                ></path>
               </svg>
               <span>Administration</span>
             </button>
@@ -273,11 +323,18 @@ const handleLogout = () => {
             <span class="admin-tag">SYSTEM GOVERNANCE</span>
             <h1 class="page-title">System Administration</h1>
             <p class="page-desc">
-              Manage enterprise access controls, user roles, security audit logs, and global system configurations.
+              Manage enterprise access controls, user roles, security audit logs, and global system
+              configurations.
             </p>
           </div>
           <button type="button" class="btn-primary-add" @click="handleAddUser">
-            <svg class="plus-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <svg
+              class="plus-icn"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
@@ -293,7 +350,13 @@ const handleLogout = () => {
             :class="{ active: activeTab === 'users' }"
             @click="activeTab = 'users'"
           >
-            <svg class="subtab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              class="subtab-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -308,7 +371,13 @@ const handleLogout = () => {
             :class="{ active: activeTab === 'audit' }"
             @click="activeTab = 'audit'"
           >
-            <svg class="subtab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              class="subtab-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
             </svg>
             <span>Security Audit Logs</span>
@@ -320,9 +389,17 @@ const handleLogout = () => {
             :class="{ active: activeTab === 'settings' }"
             @click="activeTab = 'settings'"
           >
-            <svg class="subtab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              class="subtab-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+              ></path>
             </svg>
             <span>System Settings</span>
           </button>
@@ -335,7 +412,13 @@ const handleLogout = () => {
           <!-- Filter Controls -->
           <div class="filter-controls-row">
             <div class="search-filter-box">
-              <svg class="search-filter-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                class="search-filter-icn"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
@@ -394,10 +477,10 @@ const handleLogout = () => {
                   <td>
                     <div class="auth-source-tag">
                       <svg class="microsoft-icon" viewBox="0 0 23 23">
-                        <path fill="#f35325" d="M1 1h10v10H1z"/>
-                        <path fill="#81bc06" d="M12 1h10v10H12z"/>
-                        <path fill="#05a6f0" d="M1 12h10v10H1z"/>
-                        <path fill="#ffba08" d="M12 12h10v10H12z"/>
+                        <path fill="#f35325" d="M1 1h10v10H1z" />
+                        <path fill="#81bc06" d="M12 1h10v10H12z" />
+                        <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                        <path fill="#ffba08" d="M12 12h10v10H12z" />
                       </svg>
                       <span>{{ u.authSource }}</span>
                     </div>
@@ -448,7 +531,9 @@ const handleLogout = () => {
                   <td class="time-code">{{ log.timestamp }}</td>
                   <td class="font-medium">{{ log.user }}</td>
                   <td class="action-text">{{ log.action }}</td>
-                  <td><span class="module-tag">{{ log.module }}</span></td>
+                  <td>
+                    <span class="module-tag">{{ log.module }}</span>
+                  </td>
                   <td class="ip-code">{{ log.ipAddress }}</td>
                   <td>
                     <span class="severity-tag" :class="log.severity.toLowerCase()">
@@ -469,7 +554,7 @@ const handleLogout = () => {
             <form @submit.prevent="handleSaveSettings" class="settings-form">
               <div class="form-section">
                 <h3 class="form-section-title">Microsoft Entra ID SSO Integration</h3>
-                
+
                 <div class="form-grid-2">
                   <div class="form-group">
                     <label class="form-label">ENTRA TENANT ID</label>
@@ -484,17 +569,30 @@ const handleLogout = () => {
 
               <div class="form-section">
                 <h3 class="form-section-title">DPIA Risk Engine Rules</h3>
-                
+
                 <div class="form-group max-w-md">
-                  <label class="form-label">DPIA MANDATORY RISK THRESHOLD (SCORE: {{ dpiaThreshold }})</label>
-                  <input v-model.number="dpiaThreshold" type="range" min="30" max="90" class="range-slider" />
-                  <p class="field-caption">Any assessment scoring at or above this score will trigger mandatory DPO review.</p>
+                  <label class="form-label"
+                    >DPIA MANDATORY RISK THRESHOLD (SCORE: {{ dpiaThreshold }})</label
+                  >
+                  <input
+                    v-model.number="dpiaThreshold"
+                    type="range"
+                    min="30"
+                    max="90"
+                    class="range-slider"
+                  />
+                  <p class="field-caption">
+                    Any assessment scoring at or above this score will trigger mandatory DPO review.
+                  </p>
                 </div>
 
                 <div class="toggle-row">
                   <div>
                     <h4 class="toggle-title">Automated DPO Task Routing</h4>
-                    <p class="toggle-desc">Automatically route high-risk assessments to the primary DPO inbox upon completion of screening.</p>
+                    <p class="toggle-desc">
+                      Automatically route high-risk assessments to the primary DPO inbox upon
+                      completion of screening.
+                    </p>
                   </div>
                   <input v-model="autoDpoAssignment" type="checkbox" class="toggle-switch" />
                 </div>
@@ -502,7 +600,7 @@ const handleLogout = () => {
 
               <div class="form-section">
                 <h3 class="form-section-title">Data Retention & Compliance Governance</h3>
-                
+
                 <div class="form-group max-w-sm">
                   <label class="form-label">AUDIT LOG RETENTION PERIOD (DAYS)</label>
                   <select v-model="auditLogRetentionDays" class="form-select">
@@ -515,9 +613,7 @@ const handleLogout = () => {
               </div>
 
               <div class="form-actions-footer">
-                <button type="submit" class="btn-save-settings">
-                  Save Configurations
-                </button>
+                <button type="submit" class="btn-save-settings">Save Configurations</button>
               </div>
             </form>
           </div>
@@ -993,7 +1089,7 @@ const handleLogout = () => {
 }
 
 .u-email {
-  font-size: 12px;  
+  font-size: 12px;
   color: #64748b;
 }
 
@@ -1169,7 +1265,8 @@ const handleLogout = () => {
   color: #475569;
 }
 
-.form-input, .form-select {
+.form-input,
+.form-select {
   height: 44px;
   padding: 0 16px;
   border: 1px solid #cbd5e1;

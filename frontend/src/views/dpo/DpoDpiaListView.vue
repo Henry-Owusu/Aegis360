@@ -1,34 +1,51 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import DpoSidebar from './components/DpoSidebar.vue'
+import { dpiaApi, type AssessmentSummary } from '@/services/api'
 
 const authStore = useAuthStore()
 
-const assessments = ref([
-  { id: 'PIA-2023-081', project: 'Cloud Transformation Q3', initiator: 'Sarah Jenkins (IT)', date: 'Oct 1, 2023', status: 'Under Review', risk: 'High' },
-  { id: 'PIA-2023-082', project: 'Partner Portal V2', initiator: 'David Chen (Eng)', date: 'Sep 28, 2023', status: 'Needs Mitigation', risk: 'Medium' },
-  { id: 'PIA-2023-083', project: 'HR Analytics Dashboard', initiator: 'Maria Garcia (HR)', date: 'Sep 25, 2023', status: 'Pending Review', risk: 'Low' },
-  { id: 'PIA-2023-079', project: 'New Vendor Onboarding', initiator: 'Procurement Team', date: 'Sep 15, 2023', status: 'Approved', risk: 'Low' },
-  { id: 'PIA-2023-078', project: 'Mobile App Tracking Update', initiator: 'Marketing', date: 'Sep 10, 2023', status: 'Approved', risk: 'Medium' },
-])
+const assessments = ref<AssessmentSummary[]>([])
+
+const loadAssessments = async () => {
+  try {
+    const res = await dpiaApi.listAssessments()
+    assessments.value = res.assessments
+  } catch (err) {
+    console.error('Failed to load assessments', err)
+  }
+}
+
+onMounted(() => {
+  loadAssessments()
+})
 
 const getStatusClass = (status: string) => {
   switch (status) {
-    case 'Approved': return 'status-success'
-    case 'Under Review': return 'status-primary'
-    case 'Needs Mitigation': return 'status-warning'
-    case 'Pending Review': return 'status-gray'
-    default: return 'status-gray'
+    case 'Approved':
+      return 'status-success'
+    case 'Under Review':
+      return 'status-primary'
+    case 'Needs Mitigation':
+      return 'status-warning'
+    case 'Pending Review':
+      return 'status-gray'
+    default:
+      return 'status-gray'
   }
 }
 
 const getRiskClass = (risk: string) => {
   switch (risk) {
-    case 'High': return 'risk-high'
-    case 'Medium': return 'risk-medium'
-    case 'Low': return 'risk-low'
-    default: return 'risk-low'
+    case 'High':
+      return 'risk-high'
+    case 'Medium':
+      return 'risk-medium'
+    case 'Low':
+      return 'risk-low'
+    default:
+      return 'risk-low'
   }
 }
 </script>
@@ -43,7 +60,13 @@ const getRiskClass = (risk: string) => {
       <!-- Top Navigation -->
       <header class="top-nav">
         <div class="search-bar">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
@@ -118,14 +141,12 @@ const getRiskClass = (risk: string) => {
             </thead>
             <tbody>
               <tr v-for="assessment in assessments" :key="assessment.id">
-                <td class="col-id">{{ assessment.id }}</td>
-                <td class="col-project">{{ assessment.project }}</td>
-                <td class="col-initiator">{{ assessment.initiator }}</td>
-                <td class="col-date">{{ assessment.date }}</td>
+                <td class="col-id" :title="assessment.id">{{ assessment.id.substring(0, 8) }}</td>
+                <td class="col-project">{{ assessment.title }}</td>
+                <td class="col-initiator">{{ assessment.project_manager }}</td>
+                <td class="col-date">{{ new Date(assessment.created_at).toLocaleDateString() }}</td>
                 <td class="col-risk">
-                  <span class="risk-badge" :class="getRiskClass(assessment.risk)">
-                    {{ assessment.risk }}
-                  </span>
+                  <span class="risk-badge" :class="getRiskClass('TBD')"> TBD </span>
                 </td>
                 <td class="col-status">
                   <span class="status-badge" :class="getStatusClass(assessment.status)">
@@ -357,9 +378,18 @@ const getRiskClass = (risk: string) => {
   display: inline-block;
 }
 
-.risk-high { background: #fee2e2; color: #b91c1c; }
-.risk-medium { background: #fef3c7; color: #b45309; }
-.risk-low { background: #f1f5f9; color: #475569; }
+.risk-high {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.risk-medium {
+  background: #fef3c7;
+  color: #b45309;
+}
+.risk-low {
+  background: #f1f5f9;
+  color: #475569;
+}
 
 .status-badge {
   font-size: 12px;
@@ -376,17 +406,33 @@ const getRiskClass = (risk: string) => {
   border-radius: 50%;
 }
 
-.status-success { color: #059669; }
-.status-success::before { background: #10b981; }
+.status-success {
+  color: #059669;
+}
+.status-success::before {
+  background: #10b981;
+}
 
-.status-primary { color: #0f172a; }
-.status-primary::before { background: #3b82f6; }
+.status-primary {
+  color: #0f172a;
+}
+.status-primary::before {
+  background: #3b82f6;
+}
 
-.status-warning { color: #b45309; }
-.status-warning::before { background: #f59e0b; }
+.status-warning {
+  color: #b45309;
+}
+.status-warning::before {
+  background: #f59e0b;
+}
 
-.status-gray { color: #64748b; }
-.status-gray::before { background: #94a3b8; }
+.status-gray {
+  color: #64748b;
+}
+.status-gray::before {
+  background: #94a3b8;
+}
 
 .btn-sm {
   padding: 6px 16px;

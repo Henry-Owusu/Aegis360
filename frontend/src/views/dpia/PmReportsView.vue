@@ -28,7 +28,13 @@ const handleLogout = () => {
       <!-- Center Search Bar -->
       <div class="search-container">
         <div class="search-input-wrapper">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
@@ -39,7 +45,13 @@ const handleLogout = () => {
       <!-- Right Action & Profile Section -->
       <div class="navbar-actions">
         <button type="button" class="notification-btn" title="Notifications">
-          <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="bell-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
@@ -67,10 +79,18 @@ const handleLogout = () => {
         <div class="dashboard-header">
           <div>
             <h1 class="page-title">Project Portfolio Reports</h1>
-            <p class="page-subtitle">Metrics and insights on privacy compliance across your projects.</p>
+            <p class="page-subtitle">
+              Metrics and insights on privacy compliance across your projects.
+            </p>
           </div>
           <button class="btn-outline">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="btn-icon"
+            >
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -119,11 +139,26 @@ const handleLogout = () => {
               </div>
               <div class="chart-placeholder bar-chart">
                 <!-- Mock Bar Chart -->
-                <div class="bar-col"><div class="bar approved" style="height: 100%"></div><span class="x-label">HRIS Migr</span></div>
-                <div class="bar-col"><div class="bar review" style="height: 60%"></div><span class="x-label">Cloud Q3</span></div>
-                <div class="bar-col"><div class="bar review" style="height: 35%"></div><span class="x-label">Partner API</span></div>
-                <div class="bar-col"><div class="bar draft" style="height: 20%"></div><span class="x-label">Mobile Track</span></div>
-                <div class="bar-col"><div class="bar approved" style="height: 90%"></div><span class="x-label">Vendor Onb</span></div>
+                <div class="bar-col">
+                  <div class="bar approved" style="height: 100%"></div>
+                  <span class="x-label">HRIS Migr</span>
+                </div>
+                <div class="bar-col">
+                  <div class="bar review" style="height: 60%"></div>
+                  <span class="x-label">Cloud Q3</span>
+                </div>
+                <div class="bar-col">
+                  <div class="bar review" style="height: 35%"></div>
+                  <span class="x-label">Partner API</span>
+                </div>
+                <div class="bar-col">
+                  <div class="bar draft" style="height: 20%"></div>
+                  <span class="x-label">Mobile Track</span>
+                </div>
+                <div class="bar-col">
+                  <div class="bar approved" style="height: 90%"></div>
+                  <span class="x-label">Vendor Onb</span>
+                </div>
               </div>
             </div>
 
@@ -369,7 +404,7 @@ const handleLogout = () => {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .kpi-label {
@@ -400,9 +435,15 @@ const handleLogout = () => {
   font-weight: 600;
 }
 
-.trend.down { color: #64748b; }
-.text-red { color: #b91c1c !important; }
-.text-green { color: #059669 !important; }
+.trend.down {
+  color: #64748b;
+}
+.text-red {
+  color: #b91c1c !important;
+}
+.text-green {
+  color: #059669 !important;
+}
 
 /* Charts Area */
 .charts-row {
@@ -416,7 +457,7 @@ const handleLogout = () => {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .chart-header {
@@ -466,9 +507,15 @@ const handleLogout = () => {
   opacity: 0.8;
 }
 
-.bar.approved { background: #059669; }
-.bar.review { background: #0ea5e9; }
-.bar.draft { background: #94a3b8; }
+.bar.approved {
+  background: #059669;
+}
+.bar.review {
+  background: #0ea5e9;
+}
+.bar.draft {
+  background: #94a3b8;
+}
 
 .x-label {
   font-size: 12px;
@@ -538,7 +585,13 @@ const handleLogout = () => {
   height: 10px;
   border-radius: 50%;
 }
-.dot.red { background: #b91c1c; }
-.dot.gold { background: #d97706; }
-.dot.gray { background: #e2e8f0; }
+.dot.red {
+  background: #b91c1c;
+}
+.dot.gold {
+  background: #d97706;
+}
+.dot.gray {
+  background: #e2e8f0;
+}
 </style>

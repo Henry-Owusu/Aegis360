@@ -11,7 +11,7 @@ const roles = ref([
     description: 'Full system administration access across all modules',
     userCount: 3,
     permissionsCount: 24,
-    type: 'core'
+    type: 'core',
   },
   {
     id: 'r2',
@@ -19,7 +19,7 @@ const roles = ref([
     description: 'Data Protection Officer responsible for compliance and reviews',
     userCount: 2,
     permissionsCount: 18,
-    type: 'custom'
+    type: 'custom',
   },
   {
     id: 'r3',
@@ -27,7 +27,7 @@ const roles = ref([
     description: 'Project Manager responsible for creating and submitting DPIAs',
     userCount: 15,
     permissionsCount: 12,
-    type: 'custom'
+    type: 'custom',
   },
   {
     id: 'r4',
@@ -35,7 +35,7 @@ const roles = ref([
     description: 'Legal or senior approval authority for assessments',
     userCount: 8,
     permissionsCount: 6,
-    type: 'custom'
+    type: 'custom',
   },
   {
     id: 'r5',
@@ -43,8 +43,8 @@ const roles = ref([
     description: 'Read-only access for external or internal auditing',
     userCount: 4,
     permissionsCount: 8,
-    type: 'custom'
-  }
+    type: 'custom',
+  },
 ])
 
 const searchQuery = ref('')
@@ -93,9 +93,9 @@ const searchQuery = ref('')
             </svg>
           </button>
         </div>
-        
+
         <p class="role-desc">{{ role.description }}</p>
-        
+
         <div class="role-stats">
           <div class="stat">
             <div class="stat-val">{{ role.userCount }}</div>
@@ -106,7 +106,7 @@ const searchQuery = ref('')
             <div class="stat-lbl">Permissions</div>
           </div>
         </div>
-        
+
         <div class="card-footer">
           <button class="action-link">Edit Permissions</button>
           <button class="action-link outline">View Users</button>
@@ -127,24 +127,35 @@ const searchQuery = ref('')
 .page-title {
   font-size: 24px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #ffffff;
   margin: 0 0 6px;
 }
 .page-sub {
-  color: #92929D;
+  color: #92929d;
   font-size: 14px;
   margin: 0;
 }
 .btn-primary {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 20px; border-radius: 12px;
-  background: linear-gradient(135deg, #FDBA74, #F58425);
-  border: none; color: #FFFFFF;
-  font-size: 14px; font-weight: 600; cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fdba74, #f58425);
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
   transition: opacity 0.2s;
 }
-.btn-primary svg { width: 16px; height: 16px; }
-.btn-primary:hover { opacity: 0.9; }
+.btn-primary svg {
+  width: 16px;
+  height: 16px;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
 
 /* ── Toolbar ─────────────────────────────────────────────────── */
 .toolbar {
@@ -157,22 +168,29 @@ const searchQuery = ref('')
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #1C1C24;
-  border: 1px solid rgba(255,255,255,0.06);
+  background: #1c1c24;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
   padding: 0 16px;
 }
-.search-box svg { width: 18px; height: 18px; color: #92929D; flex-shrink: 0; }
+.search-box svg {
+  width: 18px;
+  height: 18px;
+  color: #92929d;
+  flex-shrink: 0;
+}
 .search-box input {
   background: transparent;
   border: none;
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 14px;
   outline: none;
   width: 100%;
   padding: 12px 0;
 }
-.search-box input::placeholder { color: #92929D; }
+.search-box input::placeholder {
+  color: #92929d;
+}
 
 /* ── Roles Grid ──────────────────────────────────────────────── */
 .roles-grid {
@@ -181,63 +199,113 @@ const searchQuery = ref('')
   gap: 24px;
 }
 .role-card {
-  background: #1C1C24;
+  background: #1c1c24;
   border-radius: 20px;
   padding: 24px;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
   display: flex;
   flex-direction: column;
 }
 .card-header {
-  display: flex; justify-content: space-between; align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 12px;
 }
-.title-group { display: flex; align-items: center; gap: 10px; }
-.role-name { font-size: 18px; font-weight: 700; color: #FFFFFF; margin: 0; }
+.title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.role-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
 .badge-core {
-  background: rgba(245,132,37,0.12);
-  color: #FDBA74;
-  padding: 4px 8px; border-radius: 6px;
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  background: rgba(245, 132, 37, 0.12);
+  color: #fdba74;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 .more-btn {
-  background: none; border: none; color: #92929D;
-  cursor: pointer; padding: 4px; border-radius: 6px;
+  background: none;
+  border: none;
+  color: #92929d;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
   transition: all 0.2s;
 }
-.more-btn:hover { color: #FFFFFF; background: rgba(255,255,255,0.05); }
-.more-btn svg { width: 16px; height: 16px; }
+.more-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+.more-btn svg {
+  width: 16px;
+  height: 16px;
+}
 
 .role-desc {
-  color: #92929D; font-size: 14px; line-height: 1.5;
-  margin: 0 0 24px; flex: 1;
+  color: #92929d;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 24px;
+  flex: 1;
 }
 
 .role-stats {
-  display: flex; gap: 32px;
+  display: flex;
+  gap: 32px;
   margin-bottom: 24px;
   padding-bottom: 24px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
-.stat-val { font-size: 20px; font-weight: 700; color: #FFFFFF; margin-bottom: 4px; }
-.stat-lbl { font-size: 12px; color: #92929D; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.stat-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+.stat-lbl {
+  font-size: 12px;
+  color: #92929d;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
 
 .card-footer {
-  display: flex; gap: 12px;
+  display: flex;
+  gap: 12px;
 }
 .action-link {
   flex: 1;
-  background: rgba(245,132,37,0.12);
-  color: #F58425;
-  border: none; padding: 10px 0; border-radius: 10px;
-  font-size: 13px; font-weight: 600; cursor: pointer;
+  background: rgba(245, 132, 37, 0.12);
+  color: #f58425;
+  border: none;
+  padding: 10px 0;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
   transition: all 0.2s;
 }
-.action-link:hover { background: rgba(245,132,37,0.2); }
-.action-link.outline {
-  background: transparent; border: 1px solid rgba(255,255,255,0.1);
-  color: #E2E8F0;
+.action-link:hover {
+  background: rgba(245, 132, 37, 0.2);
 }
-.action-link.outline:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+.action-link.outline {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+.action-link.outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
 </style>

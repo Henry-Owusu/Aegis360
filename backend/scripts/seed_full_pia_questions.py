@@ -932,7 +932,7 @@ def seed_questions():
     print("Full PIA question seed completed successfully.")
     print(f"Questions created: {created}")
     print(f"Questions updated: {updated}")
-    print(f"Total questions: {DPIAFullPIAQuestion.query.count()}")
+    print(f"Total questions: {DPIAQuestion.query.count()}")
 
 
 def main():

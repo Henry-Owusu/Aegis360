@@ -19,15 +19,19 @@ const filteredAssessments = computed(() => {
       a.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       a.project_manager.toLowerCase().includes(searchQuery.value.toLowerCase())
 
-    const matchesStatus =
-      filterStatus.value === 'all' || a.status === filterStatus.value
+    const matchesStatus = filterStatus.value === 'all' || a.status === filterStatus.value
 
     return matchesSearch && matchesStatus
   })
 })
 
 const totalAssessments = computed(() => assessments.value.length)
-const totalPending = computed(() => assessments.value.filter(a => a.status !== 'approved' && a.status !== 'rejected' && a.status !== 'draft').length)
+const totalPending = computed(
+  () =>
+    assessments.value.filter(
+      (a) => a.status !== 'approved' && a.status !== 'rejected' && a.status !== 'draft',
+    ).length,
+)
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
 
@@ -48,10 +52,14 @@ const formatDate = (iso: string) =>
 
 const getStatusClass = (status: string) => {
   switch (status.toLowerCase()) {
-    case 'approved': return 'status-approved'
-    case 'rejected': return 'status-rejected'
-    case 'draft': return 'status-draft'
-    default: return 'status-pending'
+    case 'approved':
+      return 'status-approved'
+    case 'rejected':
+      return 'status-rejected'
+    case 'draft':
+      return 'status-draft'
+    default:
+      return 'status-pending'
   }
 }
 
@@ -89,7 +97,11 @@ onMounted(fetchData)
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input v-model="searchQuery" type="text" placeholder="Search by title or project manager..." />
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search by title or project manager..."
+        />
       </div>
       <div class="filters">
         <select v-model="filterStatus" class="filter-select">
@@ -174,11 +186,11 @@ onMounted(fetchData)
 .page-title {
   font-size: 24px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #ffffff;
   margin: 0 0 6px;
 }
 .page-sub {
-  color: #92929D;
+  color: #92929d;
   font-size: 14px;
   margin: 0;
 }
@@ -195,10 +207,17 @@ onMounted(fetchData)
   font-size: 13px;
   font-weight: 600;
 }
-.stat-chip.blue { background: rgba(59,130,246,0.12); color: #60A5FA; }
-.stat-chip.orange { background: rgba(245,132,37,0.12); color: #FDBA74; }
+.stat-chip.blue {
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+}
+.stat-chip.orange {
+  background: rgba(245, 132, 37, 0.12);
+  color: #fdba74;
+}
 .dot {
-  width: 7px; height: 7px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: currentColor;
 }
@@ -216,28 +235,38 @@ onMounted(fetchData)
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #1C1C24;
-  border: 1px solid rgba(255,255,255,0.06);
+  background: #1c1c24;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
   padding: 0 16px;
 }
-.search-box svg { width: 18px; height: 18px; color: #92929D; flex-shrink: 0; }
+.search-box svg {
+  width: 18px;
+  height: 18px;
+  color: #92929d;
+  flex-shrink: 0;
+}
 .search-box input {
   background: transparent;
   border: none;
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 14px;
   outline: none;
   width: 100%;
   padding: 12px 0;
 }
-.search-box input::placeholder { color: #92929D; }
-.filters { display: flex; gap: 12px; }
+.search-box input::placeholder {
+  color: #92929d;
+}
+.filters {
+  display: flex;
+  gap: 12px;
+}
 .filter-select {
-  background: #1C1C24;
-  border: 1px solid rgba(255,255,255,0.06);
+  background: #1c1c24;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 13px;
   padding: 10px 16px;
   outline: none;
@@ -251,23 +280,28 @@ onMounted(fetchData)
   align-items: center;
   gap: 16px;
   padding: 80px 0;
-  color: #92929D;
+  color: #92929d;
 }
 .spinner-ring {
-  width: 40px; height: 40px;
-  border: 3px solid rgba(245,132,37,0.2);
-  border-top-color: #F58425;
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(245, 132, 37, 0.2);
+  border-top-color: #f58425;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ── Table ───────────────────────────────────────────────────── */
 .table-card {
-  background: #1C1C24;
+  background: #1c1c24;
   border-radius: 20px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 .data-table {
   width: 100%;
@@ -276,49 +310,100 @@ onMounted(fetchData)
 .data-table th {
   text-align: left;
   padding: 18px 20px;
-  color: #92929D;
+  color: #92929d;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 .data-table td {
   padding: 16px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   vertical-align: middle;
 }
-.data-table tr:last-child td { border-bottom: none; }
-.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+.data-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
 .empty-row {
   text-align: center;
-  color: #92929D;
+  color: #92929d;
   font-size: 14px;
   padding: 48px !important;
 }
 
 /* ── Cells ───────────────────────────────────────────────────── */
-.primary-cell { display: flex; flex-direction: column; gap: 4px; }
-.item-title { font-size: 14px; font-weight: 600; color: #FFFFFF; }
-.item-sub { font-size: 12px; color: #92929D; font-family: monospace; }
+.primary-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+}
+.item-sub {
+  font-size: 12px;
+  color: #92929d;
+  font-family: monospace;
+}
 
-.pm-info { display: flex; align-items: center; gap: 8px; color: #E2E8F0; font-size: 13px; }
-.pm-info svg { width: 14px; height: 14px; color: #92929D; }
+.pm-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e2e8f0;
+  font-size: 13px;
+}
+.pm-info svg {
+  width: 14px;
+  height: 14px;
+  color: #92929d;
+}
 
-.dept-cell { color: #94A3B8; font-size: 13px; }
-.date-cell { color: #92929D; font-size: 13px; }
+.dept-cell {
+  color: #94a3b8;
+  font-size: 13px;
+}
+.date-cell {
+  color: #92929d;
+  font-size: 13px;
+}
 
 /* ── Status ──────────────────────────────────────────────────── */
 .status-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 12px; border-radius: 20px;
-  font-size: 12px; font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
 }
-.status-approved { background: rgba(34,197,94,0.12); color: #4ADE80; }
-.status-rejected { background: rgba(239,68,68,0.10); color: #F87171; }
-.status-draft { background: rgba(148,163,184,0.10); color: #94A3B8; }
-.status-pending { background: rgba(245,132,37,0.12); color: #FDBA74; }
+.status-approved {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+.status-rejected {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+.status-draft {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+}
+.status-pending {
+  background: rgba(245, 132, 37, 0.12);
+  color: #fdba74;
+}
 .status-dot {
-  width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 </style>

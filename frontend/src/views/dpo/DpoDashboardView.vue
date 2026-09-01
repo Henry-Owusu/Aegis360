@@ -1,12 +1,45 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AegisLogo from '@/components/common/AegisLogo.vue'
 import DpoSidebar from './components/DpoSidebar.vue'
+import { dpiaApi, type AssessmentSummary } from '@/services/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+const assessments = ref<AssessmentSummary[]>([])
+
+const loadAssessments = async () => {
+  try {
+    const res = await dpiaApi.listAssessments()
+    assessments.value = res.assessments
+  } catch (err) {
+    console.error('Failed to load assessments', err)
+  }
+}
+
+onMounted(() => {
+  loadAssessments()
+})
+
+const assignedDpiasCount = computed(
+  () => assessments.value.filter((a) => a.status !== 'Draft').length,
+)
+const riskAnalysisReqdCount = computed(
+  () => assessments.value.filter((a) => a.status === 'Submitted').length,
+)
+const returnedCount = computed(
+  () => assessments.value.filter((a) => a.status === 'Returned').length,
+)
+
+const priorityQueue = computed(() => {
+  return assessments.value
+    .filter((a) => ['Submitted', 'Under Review'].includes(a.status))
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 3)
+})
 
 const handleLogout = () => {
   authStore.logout()
@@ -32,7 +65,13 @@ const handleNavigateModules = () => {
       <!-- Top Navigation -->
       <header class="top-nav">
         <div class="search-bar">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
@@ -66,7 +105,13 @@ const handleNavigateModules = () => {
             <p class="page-subtitle">Your active assessments and risk mitigation tasks.</p>
           </div>
           <button class="btn-primary" @click="handleNavigateManageQuestions">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="btn-icon"
+            >
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
@@ -79,7 +124,7 @@ const handleNavigateModules = () => {
           <div class="metric-card bg-light">
             <div class="metric-content">
               <span class="metric-label">ASSIGNED DPIAS</span>
-              <span class="metric-value">8</span>
+              <span class="metric-value">{{ assignedDpiasCount }}</span>
             </div>
             <div class="metric-icon-box bg-blue">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -96,13 +141,15 @@ const handleNavigateModules = () => {
             <div class="metric-content">
               <span class="metric-label text-red">RISK ANALYSIS REQD</span>
               <div class="value-row">
-                <span class="metric-value text-red">4</span>
-                <span class="trend up text-red">↑2</span>
+                <span class="metric-value text-red">{{ riskAnalysisReqdCount }}</span>
+                <span v-if="riskAnalysisReqdCount > 0" class="trend up text-red">↑</span>
               </div>
             </div>
             <div class="metric-icon-box bg-red">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <path
+                  d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                ></path>
                 <line x1="12" y1="9" x2="12" y2="13"></line>
                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
               </svg>
@@ -112,7 +159,7 @@ const handleNavigateModules = () => {
           <div class="metric-card bg-gold">
             <div class="metric-content">
               <span class="metric-label text-gold-dark">RETURNED BY DPO</span>
-              <span class="metric-value text-gold-dark">1</span>
+              <span class="metric-value text-gold-dark">{{ returnedCount }}</span>
             </div>
             <div class="metric-icon-box bg-gold-dark">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -132,53 +179,30 @@ const handleNavigateModules = () => {
             </div>
 
             <div class="task-list">
-              <!-- Task 1 -->
-              <div class="task-item">
-                <div class="task-indicator red"></div>
-                <div class="task-content">
-                  <div class="task-top">
-                    <span class="tag tag-red">HIGH PRIORITY</span>
-                    <span class="task-due">Due Tomorrow</span>
-                  </div>
-                  <h4 class="task-title">Conduct Full PIA for Customer Data Migration</h4>
-                  <p class="task-meta">Project: Cloud Transformation Q3 • Initiator: Sarah Jenkins (IT)</p>
-                  <div class="task-actions mt-3">
-                    <button class="btn-sm btn-primary">Review</button>
-                    <button class="btn-sm btn-success">Approve</button>
-                  </div>
-                </div>
+              <div
+                v-if="priorityQueue.length === 0"
+                style="padding: 24px; color: #64748b; font-size: 14px"
+              >
+                No pending assessments in queue.
               </div>
-
-              <!-- Task 2 -->
-              <div class="task-item">
-                <div class="task-indicator gold"></div>
+              <div v-for="task in priorityQueue" :key="task.id" class="task-item">
+                <div
+                  class="task-indicator"
+                  :class="task.status === 'Submitted' ? 'red' : 'gold'"
+                ></div>
                 <div class="task-content">
                   <div class="task-top">
-                    <span class="tag tag-gold">REVIEW MITIGATION</span>
-                    <span class="task-due">Due in 3 days</span>
+                    <span class="tag" :class="task.status === 'Submitted' ? 'tag-red' : 'tag-gold'">
+                      {{ task.status === 'Submitted' ? 'NEW SUBMISSION' : 'UNDER REVIEW' }}
+                    </span>
+                    <span class="task-due">{{
+                      new Date(task.created_at).toLocaleDateString()
+                    }}</span>
                   </div>
-                  <h4 class="task-title">Review risk mitigations for API Integration</h4>
-                  <p class="task-meta">Project: Partner Portal V2 • Initiator: David Chen (Eng)</p>
+                  <h4 class="task-title">{{ task.title }}</h4>
+                  <p class="task-meta">Initiator: {{ task.project_manager }}</p>
                   <div class="task-actions mt-3">
                     <button class="btn-sm btn-primary">Review</button>
-                    <button class="btn-sm btn-success">Approve</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Task 3 -->
-              <div class="task-item">
-                <div class="task-indicator gray"></div>
-                <div class="task-content">
-                  <div class="task-top">
-                    <span class="tag tag-gray">INITIAL SCREENING</span>
-                    <span class="task-due">Due next week</span>
-                  </div>
-                  <h4 class="task-title">Screening Questionnaire: HR Analytics Dashboard</h4>
-                  <p class="task-meta">Project: People Ops Revamp • Initiator: Maria Garcia (HR)</p>
-                  <div class="task-actions mt-3">
-                    <button class="btn-sm btn-primary">Review</button>
-                    <button class="btn-sm btn-danger">Return</button>
                   </div>
                 </div>
               </div>
@@ -206,7 +230,7 @@ const handleNavigateModules = () => {
                 <div class="day-label">F</div>
                 <div class="day-label">S</div>
                 <div class="day-label">S</div>
-                
+
                 <div class="day muted">28</div>
                 <div class="day muted">29</div>
                 <div class="day muted">30</div>
@@ -214,7 +238,7 @@ const handleNavigateModules = () => {
                 <div class="day">2</div>
                 <div class="day muted">3</div>
                 <div class="day muted">4</div>
-                
+
                 <div class="day">5</div>
                 <div class="day">6</div>
                 <div class="day active-dot">7</div>
@@ -225,7 +249,7 @@ const handleNavigateModules = () => {
               </div>
             </div>
 
-            <div class="section-header" style="margin-top: 32px;">
+            <div class="section-header" style="margin-top: 32px">
               <h2 class="section-title">System Notifications</h2>
             </div>
             <div class="notifications-list">
@@ -237,7 +261,10 @@ const handleNavigateModules = () => {
                   </svg>
                 </div>
                 <div class="notif-content">
-                  <p>New regulatory update: EU AI Act guidelines published. Review impact on active AI assessments.</p>
+                  <p>
+                    New regulatory update: EU AI Act guidelines published. Review impact on active
+                    AI assessments.
+                  </p>
                   <span class="notif-time">2 hours ago</span>
                 </div>
               </div>
@@ -453,9 +480,16 @@ const handleNavigateModules = () => {
   align-items: center;
 }
 
-.bg-light { background: #f1f5f9; }
-.bg-red-light { background: #fee2e2; }
-.bg-gold { background: #d97706; color: #ffffff; }
+.bg-light {
+  background: #f1f5f9;
+}
+.bg-red-light {
+  background: #fee2e2;
+}
+.bg-gold {
+  background: #d97706;
+  color: #ffffff;
+}
 
 .metric-content {
   display: flex;
@@ -488,8 +522,12 @@ const handleNavigateModules = () => {
   font-weight: 600;
 }
 
-.text-red { color: #b91c1c; }
-.text-gold-dark { color: #ffffff; }
+.text-red {
+  color: #b91c1c;
+}
+.text-gold-dark {
+  color: #ffffff;
+}
 
 .metric-icon-box {
   width: 56px;
@@ -500,9 +538,18 @@ const handleNavigateModules = () => {
   justify-content: center;
 }
 
-.bg-blue { background: #0f172a; color: #ffffff; }
-.bg-red { background: #b91c1c; color: #ffffff; }
-.bg-gold-dark { background: #78350f; color: #ffffff; }
+.bg-blue {
+  background: #0f172a;
+  color: #ffffff;
+}
+.bg-red {
+  background: #b91c1c;
+  color: #ffffff;
+}
+.bg-gold-dark {
+  background: #78350f;
+  color: #ffffff;
+}
 
 .metric-icon-box svg {
   width: 24px;
@@ -550,7 +597,9 @@ const handleNavigateModules = () => {
   padding: 20px;
   display: flex;
   gap: 16px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .task-item:hover {
@@ -566,9 +615,15 @@ const handleNavigateModules = () => {
   flex-shrink: 0;
 }
 
-.task-indicator.red { background: #ef4444; }
-.task-indicator.gold { background: #d97706; }
-.task-indicator.gray { background: #cbd5e1; }
+.task-indicator.red {
+  background: #ef4444;
+}
+.task-indicator.gold {
+  background: #d97706;
+}
+.task-indicator.gray {
+  background: #cbd5e1;
+}
 
 .task-content {
   flex: 1;
@@ -589,9 +644,18 @@ const handleNavigateModules = () => {
   letter-spacing: 0.05em;
 }
 
-.tag-red { background: #fee2e2; color: #b91c1c; }
-.tag-gold { background: #fef3c7; color: #b45309; }
-.tag-gray { background: #e2e8f0; color: #475569; }
+.tag-red {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.tag-gold {
+  background: #fef3c7;
+  color: #b45309;
+}
+.tag-gray {
+  background: #e2e8f0;
+  color: #475569;
+}
 
 .task-due {
   font-size: 12px;
@@ -716,8 +780,14 @@ const handleNavigateModules = () => {
   margin: 0 auto;
 }
 
-.day.muted { color: #cbd5e1; }
-.day.active-red { color: #ef4444; font-weight: 700; position: relative; }
+.day.muted {
+  color: #cbd5e1;
+}
+.day.active-red {
+  color: #ef4444;
+  font-weight: 700;
+  position: relative;
+}
 .day.active-red::after {
   content: '';
   position: absolute;
@@ -727,7 +797,9 @@ const handleNavigateModules = () => {
   background: #ef4444;
   border-radius: 50%;
 }
-.day.active-dot { position: relative; }
+.day.active-dot {
+  position: relative;
+}
 .day.active-dot::after {
   content: '';
   position: absolute;
@@ -766,8 +838,12 @@ const handleNavigateModules = () => {
   flex-shrink: 0;
 }
 
-.notif-icon.blue { color: #0ea5e9; }
-.notif-icon.gray { color: #64748b; }
+.notif-icon.blue {
+  color: #0ea5e9;
+}
+.notif-icon.gray {
+  color: #64748b;
+}
 
 .notif-content p {
   font-size: 13px;

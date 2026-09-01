@@ -15,7 +15,13 @@ const authStore = useAuthStore()
       <!-- Top Navigation -->
       <header class="top-nav">
         <div class="search-bar">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
@@ -57,10 +63,18 @@ const authStore = useAuthStore()
         <div class="dashboard-header">
           <div>
             <h1 class="page-title">Compliance Reports</h1>
-            <p class="page-subtitle">Aggregated metrics on privacy assessments and identified risks.</p>
+            <p class="page-subtitle">
+              Aggregated metrics on privacy assessments and identified risks.
+            </p>
           </div>
           <button class="btn-outline">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="btn-icon"
+            >
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -108,19 +122,48 @@ const authStore = useAuthStore()
             <div class="chart-card large">
               <div class="chart-header">
                 <h3>Assessment Volume by Month</h3>
-                <select class="chart-filter"><option>2023</option></select>
+                <select class="chart-filter">
+                  <option>2023</option>
+                </select>
               </div>
               <div class="chart-placeholder bar-chart">
                 <!-- Mock Bar Chart -->
-                <div class="bar-col"><div class="bar" style="height: 40%"></div><span class="x-label">Jan</span></div>
-                <div class="bar-col"><div class="bar" style="height: 60%"></div><span class="x-label">Feb</span></div>
-                <div class="bar-col"><div class="bar" style="height: 35%"></div><span class="x-label">Mar</span></div>
-                <div class="bar-col"><div class="bar" style="height: 80%"></div><span class="x-label">Apr</span></div>
-                <div class="bar-col"><div class="bar" style="height: 55%"></div><span class="x-label">May</span></div>
-                <div class="bar-col"><div class="bar" style="height: 90%"></div><span class="x-label">Jun</span></div>
-                <div class="bar-col"><div class="bar" style="height: 65%"></div><span class="x-label">Jul</span></div>
-                <div class="bar-col"><div class="bar" style="height: 75%"></div><span class="x-label">Aug</span></div>
-                <div class="bar-col"><div class="bar" style="height: 45%"></div><span class="x-label">Sep</span></div>
+                <div class="bar-col">
+                  <div class="bar" style="height: 40%"></div>
+                  <span class="x-label">Jan</span>
+                </div>
+                <div class="bar-col">
+                  <div class="bar" style="height: 60%"></div>
+                  <span class="x-label">Feb</span>
+                </div>
+                <div class="bar-col">
+                  <div class="bar" style="height: 35%"></div>
+                  <span class="x-label">Mar</span>
+                </div>
+                <div class="bar-col">
+                  <div class="bar" style="height: 80%"></div>
+                  <span class="x-label">Apr</span>
+                </div>
+                <div class="bar-col">
+                  <div class="bar" style="height: 55%"></div>
+                  <span class="x-label">May</span>
+                </div>
+                <div class="bar-col">
+                  <div class="bar" style="height: 90%"></div>
+                  <span class="x-label">Jun</span>
+                </div>
+                <div class="bar-col">
+                  <div class="bar" style="height: 65%"></div>
+                  <span class="x-label">Jul</span>
+                </div>
+                <div class="bar-col">
+                  <div class="bar" style="height: 75%"></div>
+                  <span class="x-label">Aug</span>
+                </div>
+                <div class="bar-col">
+                  <div class="bar" style="height: 45%"></div>
+                  <span class="x-label">Sep</span>
+                </div>
               </div>
             </div>
 
@@ -317,7 +360,7 @@ const authStore = useAuthStore()
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .kpi-label {
@@ -352,10 +395,18 @@ const authStore = useAuthStore()
   font-weight: 600;
 }
 
-.trend.up { color: #059669; }
-.trend.down { color: #0ea5e9; }
-.text-red { color: #b91c1c !important; }
-.text-green { color: #059669 !important; }
+.trend.up {
+  color: #059669;
+}
+.trend.down {
+  color: #0ea5e9;
+}
+.text-red {
+  color: #b91c1c !important;
+}
+.text-green {
+  color: #059669 !important;
+}
 
 /* Charts Area */
 .charts-row {
@@ -369,7 +420,7 @@ const authStore = useAuthStore()
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .chart-header {
@@ -494,8 +545,13 @@ const authStore = useAuthStore()
   height: 10px;
   border-radius: 50%;
 }
-.dot.red { background: #b91c1c; }
-.dot.gold { background: #d97706; }
-.dot.gray { background: #e2e8f0; }
-
+.dot.red {
+  background: #b91c1c;
+}
+.dot.gold {
+  background: #d97706;
+}
+.dot.gray {
+  background: #e2e8f0;
+}
 </style>

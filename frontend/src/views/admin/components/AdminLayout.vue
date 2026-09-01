@@ -23,7 +23,15 @@ const handleLogout = () => {
       <header class="top-navbar">
         <div class="navbar-left">
           <div class="search-bar">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              class="search-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
@@ -33,7 +41,14 @@ const handleLogout = () => {
 
         <div class="navbar-actions">
           <button type="button" class="action-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -42,15 +57,31 @@ const handleLogout = () => {
           </button>
 
           <button type="button" class="icon-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+              ></path>
               <polyline points="22,6 12,13 2,6"></polyline>
             </svg>
             <span class="badge green">2</span>
           </button>
 
           <button type="button" class="icon-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
@@ -65,7 +96,13 @@ const handleLogout = () => {
               <span class="name">{{ authStore.user.name }}</span>
               <span class="role">{{ authStore.user.role }}</span>
             </div>
-            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              class="chevron"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </div>
@@ -85,8 +122,8 @@ const handleLogout = () => {
   display: flex;
   min-height: 100vh;
   width: 100%;
-  background-color: #13131A;
-  color: #FFFFFF;
+  background-color: #13131a;
+  color: #ffffff;
   font-family: 'Inter', system-ui, sans-serif;
 }
 
@@ -103,13 +140,13 @@ const handleLogout = () => {
   align-items: center;
   justify-content: space-between;
   padding: 0 40px;
-  background-color: #13131A;
+  background-color: #13131a;
 }
 
 .search-bar {
   display: flex;
   align-items: center;
-  background-color: #1C1C24;
+  background-color: #1c1c24;
   border-radius: 999px;
   padding: 10px 16px;
   width: 320px;
@@ -118,21 +155,21 @@ const handleLogout = () => {
 .search-icon {
   width: 18px;
   height: 18px;
-  color: #92929D;
+  color: #92929d;
   margin-right: 12px;
 }
 
 .search-input {
   background: transparent;
   border: none;
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 14px;
   width: 100%;
   outline: none;
 }
 
 .search-input::placeholder {
-  color: #92929D;
+  color: #92929d;
 }
 
 .navbar-actions {
@@ -147,7 +184,7 @@ const handleLogout = () => {
   gap: 8px;
   background: transparent;
   border: none;
-  color: #92929D;
+  color: #92929d;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -155,7 +192,7 @@ const handleLogout = () => {
 }
 
 .action-btn:hover {
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .action-btn svg {
@@ -167,7 +204,7 @@ const handleLogout = () => {
   position: relative;
   background: transparent;
   border: none;
-  color: #92929D;
+  color: #92929d;
   cursor: pointer;
   padding: 4px;
   display: flex;
@@ -177,7 +214,7 @@ const handleLogout = () => {
 }
 
 .icon-btn:hover {
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .icon-btn svg {
@@ -197,16 +234,16 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FFFFFF;
-  border: 2px solid #13131A;
+  color: #ffffff;
+  border: 2px solid #13131a;
 }
 
 .badge.green {
-  background-color: #22C55E;
+  background-color: #22c55e;
 }
 
 .badge.yellow {
-  background-color: #F59E0B;
+  background-color: #f59e0b;
 }
 
 .user-profile {
@@ -238,19 +275,19 @@ const handleLogout = () => {
 .name {
   font-size: 13.5px;
   font-weight: 600;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .role {
   font-size: 11px;
-  color: #92929D;
+  color: #92929d;
   margin-top: 2px;
 }
 
 .chevron {
   width: 16px;
   height: 16px;
-  color: #E29A46;
+  color: #e29a46;
 }
 
 .main-content {

@@ -177,12 +177,18 @@ export const dpiaApi = {
   },
 
   // Responses
-  getResponses(assessmentId: string, section?: string): Promise<{ responses: Record<string, any> }> {
+  getResponses(
+    assessmentId: string,
+    section?: string,
+  ): Promise<{ responses: Record<string, any> }> {
     const query = section ? `?section=${encodeURIComponent(section)}` : ''
     return request(`/api/dpia/assessments/${assessmentId}/responses${query}`)
   },
 
-  saveResponses(assessmentId: string, responses: Record<string, any>): Promise<{ message: string }> {
+  saveResponses(
+    assessmentId: string,
+    responses: Record<string, any>,
+  ): Promise<{ message: string }> {
     return request(`/api/dpia/assessments/${assessmentId}/responses`, {
       method: 'PUT',
       body: JSON.stringify({ responses }),
@@ -225,7 +231,9 @@ export const usersApi = {
   },
 
   removeRole(userId: string, roleName: string): Promise<{ message: string; roles: string[] }> {
-    return request(`/api/users/${userId}/roles/${encodeURIComponent(roleName)}`, { method: 'DELETE' })
+    return request(`/api/users/${userId}/roles/${encodeURIComponent(roleName)}`, {
+      method: 'DELETE',
+    })
   },
 
   listRoles(): Promise<{ roles: RoleRecord[] }> {

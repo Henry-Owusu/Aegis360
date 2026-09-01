@@ -16,15 +16,15 @@ const fetchDashboardData = async () => {
   try {
     const [assessmentsRes, usersRes] = await Promise.all([
       dpiaApi.listAssessments(),
-      usersApi.listUsers()
+      usersApi.listUsers(),
     ])
-    
+
     totalAssessments.value = assessmentsRes.total
     totalUsers.value = usersRes.total
-    
+
     // For pending reviews, count assessments not in 'approved' or 'rejected'
-    pendingReviews.value = assessmentsRes.assessments.filter(a => 
-      a.status !== 'approved' && a.status !== 'rejected' && a.status !== 'draft'
+    pendingReviews.value = assessmentsRes.assessments.filter(
+      (a) => a.status !== 'approved' && a.status !== 'rejected' && a.status !== 'draft',
     ).length
   } catch (error) {
     console.error('Failed to load dashboard data:', error)
@@ -70,7 +70,9 @@ onMounted(fetchDashboardData)
           </div>
         </div>
         <div class="card-footer">
-          <button class="view-link" @click="router.push('/admin/assessments')">View Report &rarr;</button>
+          <button class="view-link" @click="router.push('/admin/assessments')">
+            View Report &rarr;
+          </button>
         </div>
       </div>
 
@@ -142,7 +144,9 @@ onMounted(fetchDashboardData)
           </div>
         </div>
         <div class="card-footer">
-          <button class="view-link" @click="router.push('/admin/assessments')">View Queue &rarr;</button>
+          <button class="view-link" @click="router.push('/admin/assessments')">
+            View Queue &rarr;
+          </button>
         </div>
       </div>
 
@@ -168,13 +172,47 @@ onMounted(fetchDashboardData)
         <div class="chart-container">
           <!-- Abstract representation of the curved graph -->
           <svg viewBox="0 0 1000 200" preserveAspectRatio="none" class="chart-svg">
-            <path d="M0,150 Q100,50 200,100 T400,120 T600,60 T800,140 T1000,80" fill="none" stroke="#F58425" stroke-width="4"></path>
-            <path d="M0,120 Q150,180 300,100 T500,150 T700,90 T900,160 T1000,110" fill="none" stroke="#FDBA74" stroke-width="4"></path>
-            
+            <path
+              d="M0,150 Q100,50 200,100 T400,120 T600,60 T800,140 T1000,80"
+              fill="none"
+              stroke="#F58425"
+              stroke-width="4"
+            ></path>
+            <path
+              d="M0,120 Q150,180 300,100 T500,150 T700,90 T900,160 T1000,110"
+              fill="none"
+              stroke="#FDBA74"
+              stroke-width="4"
+            ></path>
+
             <!-- Grid lines -->
-            <line x1="0" y1="50" x2="1000" y2="50" stroke="#2c2c35" stroke-width="1" stroke-dasharray="4,4"></line>
-            <line x1="0" y1="100" x2="1000" y2="100" stroke="#2c2c35" stroke-width="1" stroke-dasharray="4,4"></line>
-            <line x1="0" y1="150" x2="1000" y2="150" stroke="#2c2c35" stroke-width="1" stroke-dasharray="4,4"></line>
+            <line
+              x1="0"
+              y1="50"
+              x2="1000"
+              y2="50"
+              stroke="#2c2c35"
+              stroke-width="1"
+              stroke-dasharray="4,4"
+            ></line>
+            <line
+              x1="0"
+              y1="100"
+              x2="1000"
+              y2="100"
+              stroke="#2c2c35"
+              stroke-width="1"
+              stroke-dasharray="4,4"
+            ></line>
+            <line
+              x1="0"
+              y1="150"
+              x2="1000"
+              y2="150"
+              stroke="#2c2c35"
+              stroke-width="1"
+              stroke-dasharray="4,4"
+            ></line>
           </svg>
         </div>
       </div>
@@ -231,7 +269,7 @@ onMounted(fetchDashboardData)
 }
 
 .dark-card {
-  background-color: #1C1C24;
+  background-color: #1c1c24;
   border-radius: 20px;
   padding: 24px;
   display: flex;
@@ -271,7 +309,7 @@ onMounted(fetchDashboardData)
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #2C2C35;
+  background-color: #2c2c35;
 }
 
 .icon-wrap svg {
@@ -279,21 +317,33 @@ onMounted(fetchDashboardData)
   height: 14px;
 }
 
-.icon-wrap.primary { color: #F58425; background-color: rgba(245, 132, 37, 0.15); }
-.icon-wrap.secondary { color: #FDBA74; background-color: rgba(253, 186, 116, 0.15); }
-.icon-wrap.warning { color: #F59E0B; background-color: rgba(245, 158, 11, 0.15); }
-.icon-wrap.chart { color: #A78BFA; background-color: rgba(167, 139, 250, 0.15); }
+.icon-wrap.primary {
+  color: #f58425;
+  background-color: rgba(245, 132, 37, 0.15);
+}
+.icon-wrap.secondary {
+  color: #fdba74;
+  background-color: rgba(253, 186, 116, 0.15);
+}
+.icon-wrap.warning {
+  color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.15);
+}
+.icon-wrap.chart {
+  color: #a78bfa;
+  background-color: rgba(167, 139, 250, 0.15);
+}
 
 h3 {
   font-size: 15px;
   font-weight: 600;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .more-btn {
   background: transparent;
   border: none;
-  color: #92929D;
+  color: #92929d;
   cursor: pointer;
   padding: 4px;
 }
@@ -310,7 +360,7 @@ h3 {
 .value {
   font-size: 36px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #ffffff;
   margin-bottom: 8px;
 }
 
@@ -327,11 +377,15 @@ h3 {
   height: 16px;
 }
 
-.trend.positive { color: #22C55E; }
-.trend.negative { color: #EF4444; }
+.trend.positive {
+  color: #22c55e;
+}
+.trend.negative {
+  color: #ef4444;
+}
 
 .trend-sub {
-  color: #92929D;
+  color: #92929d;
   font-weight: 500;
   margin-left: 4px;
 }
@@ -345,7 +399,7 @@ h3 {
   border: none;
   padding: 0;
   cursor: pointer;
-  color: #92929D;
+  color: #92929d;
   font-size: 13px;
   text-decoration: none;
   font-weight: 500;
@@ -353,7 +407,7 @@ h3 {
 }
 
 .view-link:hover {
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .chart-container {
@@ -380,7 +434,7 @@ h3 {
 .dark-table th {
   text-align: left;
   padding: 16px 8px;
-  color: #92929D;
+  color: #92929d;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -389,7 +443,7 @@ h3 {
 
 .dark-table td {
   padding: 16px 8px;
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
@@ -399,7 +453,7 @@ h3 {
 }
 
 .muted {
-  color: #92929D;
+  color: #92929d;
 }
 
 .status-pill {
@@ -412,16 +466,16 @@ h3 {
 
 .status-pill.positive {
   background-color: rgba(34, 197, 94, 0.15);
-  color: #4ADE80;
+  color: #4ade80;
 }
 
 .status-pill.warning {
   background-color: rgba(245, 158, 11, 0.15);
-  color: #FBBF24;
+  color: #fbbf24;
 }
 
 .status-pill.neutral {
   background-color: rgba(146, 146, 157, 0.15);
-  color: #92929D;
+  color: #92929d;
 }
 </style>

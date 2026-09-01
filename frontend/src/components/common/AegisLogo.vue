@@ -4,18 +4,13 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  height: 225
+  height: 225,
 })
 </script>
 
 <template>
   <div class="aegis-logo-container">
-    <img
-      src="/Aegislogo.jpeg"
-      alt="Aegis360 Logo"
-      class="logo-image"
-      :style="{ height: `62px` }"
-    />
+    <img src="/Aegislogo.jpeg" alt="Aegis360 Logo" class="logo-image" :style="{ height: `62px` }" />
   </div>
 </template>
 

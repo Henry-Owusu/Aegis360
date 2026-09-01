@@ -8,28 +8,61 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const assessments = ref([
-  { id: 'PIA-2023-081', project: 'Cloud Transformation Q3', date: 'Oct 1, 2023', status: 'Under Review', risk: 'High' },
-  { id: 'PIA-2023-082', project: 'Partner Portal V2', date: 'Sep 28, 2023', status: 'Draft', risk: 'Medium' },
-  { id: 'PIA-2023-084', project: 'Project Phoenix', date: 'Oct 15, 2023', status: 'Needs Mitigation', risk: 'High' },
-  { id: 'PIA-2023-078', project: 'Mobile App Tracking Update', date: 'Sep 10, 2023', status: 'Approved', risk: 'Low' },
+  {
+    id: 'PIA-2023-081',
+    project: 'Cloud Transformation Q3',
+    date: 'Oct 1, 2023',
+    status: 'Under Review',
+    risk: 'High',
+  },
+  {
+    id: 'PIA-2023-082',
+    project: 'Partner Portal V2',
+    date: 'Sep 28, 2023',
+    status: 'Draft',
+    risk: 'Medium',
+  },
+  {
+    id: 'PIA-2023-084',
+    project: 'Project Phoenix',
+    date: 'Oct 15, 2023',
+    status: 'Needs Mitigation',
+    risk: 'High',
+  },
+  {
+    id: 'PIA-2023-078',
+    project: 'Mobile App Tracking Update',
+    date: 'Sep 10, 2023',
+    status: 'Approved',
+    risk: 'Low',
+  },
 ])
 
 const getStatusClass = (status: string) => {
   switch (status) {
-    case 'Approved': return 'status-success'
-    case 'Under Review': return 'status-primary'
-    case 'Needs Mitigation': return 'status-warning'
-    case 'Draft': return 'status-gray'
-    default: return 'status-gray'
+    case 'Approved':
+      return 'status-success'
+    case 'Under Review':
+      return 'status-primary'
+    case 'Needs Mitigation':
+      return 'status-warning'
+    case 'Draft':
+      return 'status-gray'
+    default:
+      return 'status-gray'
   }
 }
 
 const getRiskClass = (risk: string) => {
   switch (risk) {
-    case 'High': return 'risk-high'
-    case 'Medium': return 'risk-medium'
-    case 'Low': return 'risk-low'
-    default: return 'risk-low'
+    case 'High':
+      return 'risk-high'
+    case 'Medium':
+      return 'risk-medium'
+    case 'Low':
+      return 'risk-low'
+    default:
+      return 'risk-low'
   }
 }
 
@@ -59,7 +92,13 @@ const handleCreateAssessment = () => {
       <!-- Center Search Bar -->
       <div class="search-container">
         <div class="search-input-wrapper">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
@@ -70,7 +109,13 @@ const handleCreateAssessment = () => {
       <!-- Right Action & Profile Section -->
       <div class="navbar-actions">
         <button type="button" class="notification-btn" title="Notifications">
-          <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="bell-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
@@ -101,7 +146,13 @@ const handleCreateAssessment = () => {
             <p class="page-subtitle">Manage and track the DPIAs for your assigned projects.</p>
           </div>
           <button class="add-assessment-btn" @click="handleCreateAssessment">
-            <svg class="plus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <svg
+              class="plus-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
@@ -454,9 +505,18 @@ const handleCreateAssessment = () => {
   display: inline-block;
 }
 
-.risk-high { background: #fee2e2; color: #b91c1c; }
-.risk-medium { background: #fef3c7; color: #b45309; }
-.risk-low { background: #f1f5f9; color: #475569; }
+.risk-high {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.risk-medium {
+  background: #fef3c7;
+  color: #b45309;
+}
+.risk-low {
+  background: #f1f5f9;
+  color: #475569;
+}
 
 .status-badge {
   font-size: 12px;
@@ -473,17 +533,33 @@ const handleCreateAssessment = () => {
   border-radius: 50%;
 }
 
-.status-success { color: #059669; }
-.status-success::before { background: #10b981; }
+.status-success {
+  color: #059669;
+}
+.status-success::before {
+  background: #10b981;
+}
 
-.status-primary { color: #0f172a; }
-.status-primary::before { background: #3b82f6; }
+.status-primary {
+  color: #0f172a;
+}
+.status-primary::before {
+  background: #3b82f6;
+}
 
-.status-warning { color: #b45309; }
-.status-warning::before { background: #f59e0b; }
+.status-warning {
+  color: #b45309;
+}
+.status-warning::before {
+  background: #f59e0b;
+}
 
-.status-gray { color: #64748b; }
-.status-gray::before { background: #94a3b8; }
+.status-gray {
+  color: #64748b;
+}
+.status-gray::before {
+  background: #94a3b8;
+}
 
 .btn-sm {
   padding: 6px 16px;

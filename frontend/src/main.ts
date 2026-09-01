@@ -12,7 +12,7 @@ app.use(pinia)
 app.use(router)
 
 // Restore session from localStorage before mounting
-const authStore = useAuthStore()
+const authStore = useAuthStore(pinia)
 authStore.hydrateFromStorage()
 
 app.mount('#app')

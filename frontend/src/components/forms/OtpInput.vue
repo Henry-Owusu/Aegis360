@@ -10,8 +10,8 @@ const props = withDefaults(
   {
     modelValue: '',
     digits: 6,
-    disabled: false
-  }
+    disabled: false,
+  },
 )
 
 const emit = defineEmits<{
@@ -29,7 +29,7 @@ watch(
     const chars = (val || '').slice(0, props.digits).split('')
     otpDigits.value = Array.from({ length: props.digits }, (_, i) => chars[i] || '')
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const handleInput = (index: number, event: Event) => {

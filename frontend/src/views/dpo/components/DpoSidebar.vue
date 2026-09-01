@@ -14,7 +14,11 @@ const handleNavigateModules = () => {
 
 <template>
   <aside class="sidebar">
-    <div class="sidebar-header" @click="handleNavigateModules" style="cursor: pointer; justify-content: center;">
+    <div
+      class="sidebar-header"
+      @click="handleNavigateModules"
+      style="cursor: pointer; justify-content: center"
+    >
       <AegisLogo :height="42" />
     </div>
 
@@ -22,8 +26,18 @@ const handleNavigateModules = () => {
       <div class="nav-section">
         <h3 class="nav-title">CORE OPERATIONS</h3>
         <nav class="nav-menu">
-          <RouterLink to="/dpo/dashboard" class="nav-item" :class="{ active: isActive('/dpo/dashboard') }">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <RouterLink
+            to="/dpo/dashboard"
+            class="nav-item"
+            :class="{ active: isActive('/dpo/dashboard') }"
+          >
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <rect x="3" y="3" width="7" height="7"></rect>
               <rect x="14" y="3" width="7" height="7"></rect>
               <rect x="14" y="14" width="7" height="7"></rect>
@@ -32,13 +46,29 @@ const handleNavigateModules = () => {
             Dashboard
           </RouterLink>
           <RouterLink to="/dpo/dpias" class="nav-item" :class="{ active: isActive('/dpo/dpias') }">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
             </svg>
             DPIA Module
           </RouterLink>
-          <RouterLink to="/dpo/risk-register" class="nav-item" :class="{ active: isActive('/dpo/risk-register') }">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <RouterLink
+            to="/dpo/risk-register"
+            class="nav-item"
+            :class="{ active: isActive('/dpo/risk-register') }"
+          >
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
               <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -47,8 +77,18 @@ const handleNavigateModules = () => {
             </svg>
             Risk Register
           </RouterLink>
-          <RouterLink to="/dpo/reports" class="nav-item" :class="{ active: isActive('/dpo/reports') }">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <RouterLink
+            to="/dpo/reports"
+            class="nav-item"
+            :class="{ active: isActive('/dpo/reports') }"
+          >
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <line x1="18" y1="20" x2="18" y2="10"></line>
               <line x1="12" y1="20" x2="12" y2="4"></line>
               <line x1="6" y1="20" x2="6" y2="14"></line>

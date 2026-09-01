@@ -11,10 +11,10 @@ const authStore = useAuthStore()
 const sections = ref([
   { id: 'basic_data', name: 'Basic Data', active: true },
   { id: 'screening', name: 'Screening', active: false },
-  { id: 'full_pia', name: 'Full PIA', active: false }
+  { id: 'full_pia', name: 'Full PIA', active: false },
 ])
 
-const activeSectionId = computed(() => sections.value.find(s => s.active)?.id || 'basic_data')
+const activeSectionId = computed(() => sections.value.find((s) => s.active)?.id || 'basic_data')
 
 const questions = ref<any[]>([])
 const isLoading = ref(false)
@@ -32,7 +32,7 @@ const newQuestion = ref({
   answer_type: 'Short Text',
   required: true,
   display_order: 0,
-  options: [] as string[]
+  options: [] as string[],
 })
 const newOptionText = ref('')
 
@@ -54,7 +54,7 @@ const loadQuestions = async () => {
 }
 
 const selectSection = (id: string) => {
-  sections.value.forEach(s => s.active = s.id === id)
+  sections.value.forEach((s) => (s.active = s.id === id))
   loadQuestions()
 }
 
@@ -80,7 +80,7 @@ const openAddPanel = () => {
     answer_type: 'Short Text',
     required: true,
     display_order: questions.value.length * 10 + 10,
-    options: []
+    options: [],
   }
   isAddingQuestion.value = true
 }
@@ -96,7 +96,7 @@ const handleEditQuestion = (q: any) => {
     answer_type: q.answer_type || 'Short Text',
     required: q.required !== false,
     display_order: q.display_order || 0,
-    options: q.options ? [...q.options] : []
+    options: q.options ? [...q.options] : [],
   }
   isAddingQuestion.value = true
 }
@@ -115,20 +115,22 @@ const handleSaveQuestion = async () => {
   if (newQuestion.value.question_text.trim() === '') return
   if (newQuestion.value.question_number.trim() === '') return
   if (newQuestion.value.section_title.trim() === '') return
-  
+
   try {
     const payload = {
       ...newQuestion.value,
       section: activeSectionId.value,
-      options: ['Radio', 'Checkbox', 'Dropdown'].includes(newQuestion.value.answer_type) ? newQuestion.value.options : null
+      options: ['Radio', 'Checkbox', 'Dropdown'].includes(newQuestion.value.answer_type)
+        ? newQuestion.value.options
+        : null,
     }
-    
+
     if (isEditingQuestion.value && editingQuestionId.value) {
       await dpiaApi.updateQuestion(editingQuestionId.value, payload)
     } else {
       await dpiaApi.createQuestion(payload)
     }
-    
+
     isAddingQuestion.value = false
     await loadQuestions()
   } catch (error) {
@@ -151,7 +153,13 @@ onMounted(() => {
       <!-- Top Navigation -->
       <header class="top-nav">
         <div class="search-bar">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
@@ -184,12 +192,17 @@ onMounted(() => {
             <h1 class="page-title">Questionnaire Builder</h1>
             <p class="page-subtitle">Manage dynamic questions for DPIA sections.</p>
           </div>
-          <div style="display: flex; gap: 12px;">
-            <button class="btn-outline" @click="isPreviewing = true">
-              Preview Section
-            </button>
+          <div style="display: flex; gap: 12px">
+            <button class="btn-outline" @click="isPreviewing = true">Preview Section</button>
             <button class="btn-primary" @click="openAddPanel">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon-svg" style="width: 16px; height: 16px;">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                class="btn-icon-svg"
+                style="width: 16px; height: 16px"
+              >
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
@@ -201,10 +214,10 @@ onMounted(() => {
         <div class="builder-container">
           <!-- Section Tabs -->
           <div class="section-tabs">
-            <button 
-              v-for="s in sections" 
-              :key="s.id" 
-              :class="['tab-btn', { active: s.active }]" 
+            <button
+              v-for="s in sections"
+              :key="s.id"
+              :class="['tab-btn', { active: s.active }]"
               @click="selectSection(s.id)"
             >
               {{ s.name }}
@@ -215,24 +228,44 @@ onMounted(() => {
             <!-- Questions List -->
             <div class="questions-list">
               <div v-if="isLoading" class="empty-state">Loading questions...</div>
-              <div v-else-if="questions.length === 0" class="empty-state">No questions found in this section.</div>
+              <div v-else-if="questions.length === 0" class="empty-state">
+                No questions found in this section.
+              </div>
               <div v-else class="question-card" v-for="q in questions" :key="q.id">
                 <div class="q-header">
-                  <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="display: flex; align-items: center; gap: 12px">
                     <span class="q-number">{{ q.question_number }}</span>
                     <span class="q-type">{{ q.answer_type }}</span>
                     <span v-if="q.required" class="q-badge required">Required</span>
                   </div>
-                  <div class="q-actions" style="margin-left: auto; display: flex; gap: 8px;">
+                  <div class="q-actions" style="margin-left: auto; display: flex; gap: 8px">
                     <button class="icon-btn" @click="handleEditQuestion(q)" title="Edit">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        style="width: 16px; height: 16px"
+                      >
                         <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
                       </svg>
                     </button>
-                    <button class="icon-btn danger" @click="handleDeleteQuestion(q.id)" title="Delete">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                    <button
+                      class="icon-btn danger"
+                      @click="handleDeleteQuestion(q.id)"
+                      title="Delete"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        style="width: 16px; height: 16px"
+                      >
                         <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <path
+                          d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                        ></path>
                       </svg>
                     </button>
                   </div>
@@ -255,19 +288,31 @@ onMounted(() => {
               <div class="panel-body">
                 <div class="form-group">
                   <label>Question Number / ID</label>
-                  <input type="text" v-model="newQuestion.question_number" placeholder="e.g. 1.1">
+                  <input type="text" v-model="newQuestion.question_number" placeholder="e.g. 1.1" />
                 </div>
                 <div class="form-group">
                   <label>Group / Section Title</label>
-                  <input type="text" v-model="newQuestion.section_title" placeholder="e.g. Project Details">
+                  <input
+                    type="text"
+                    v-model="newQuestion.section_title"
+                    placeholder="e.g. Project Details"
+                  />
                 </div>
                 <div class="form-group">
                   <label>Question Text</label>
-                  <textarea v-model="newQuestion.question_text" rows="3" placeholder="Enter question"></textarea>
+                  <textarea
+                    v-model="newQuestion.question_text"
+                    rows="3"
+                    placeholder="Enter question"
+                  ></textarea>
                 </div>
                 <div class="form-group">
                   <label>Guidance (Optional)</label>
-                  <textarea v-model="newQuestion.guidance" rows="2" placeholder="Helpful context"></textarea>
+                  <textarea
+                    v-model="newQuestion.guidance"
+                    rows="2"
+                    placeholder="Helpful context"
+                  ></textarea>
                 </div>
                 <div class="form-group">
                   <label>Answer Type</label>
@@ -281,8 +326,11 @@ onMounted(() => {
                     <option>User Search</option>
                   </select>
                 </div>
-                
-                <div v-if="['Radio', 'Checkbox', 'Dropdown'].includes(newQuestion.answer_type)" class="form-group options-group">
+
+                <div
+                  v-if="['Radio', 'Checkbox', 'Dropdown'].includes(newQuestion.answer_type)"
+                  class="form-group options-group"
+                >
                   <label>Options</label>
                   <div class="options-list">
                     <div v-for="(opt, idx) in newQuestion.options" :key="idx" class="option-item">
@@ -291,23 +339,28 @@ onMounted(() => {
                     </div>
                   </div>
                   <div class="add-option">
-                    <input type="text" v-model="newOptionText" placeholder="New option" @keyup.enter="addOption">
+                    <input
+                      type="text"
+                      v-model="newOptionText"
+                      placeholder="New option"
+                      @keyup.enter="addOption"
+                    />
                     <button class="btn-outline btn-sm" @click="addOption">Add</button>
                   </div>
                 </div>
-                
+
                 <div class="form-group checkbox-group">
                   <label>
-                    <input type="checkbox" v-model="newQuestion.required">
+                    <input type="checkbox" v-model="newQuestion.required" />
                     Required Question
                   </label>
                 </div>
-                
+
                 <div class="form-group">
                   <label>Display Order</label>
-                  <input type="number" v-model="newQuestion.display_order">
+                  <input type="number" v-model="newQuestion.display_order" />
                 </div>
-                
+
                 <button class="btn-primary full-width mt-4" @click="handleSaveQuestion">
                   {{ isEditingQuestion ? 'Update Question' : 'Save Question' }}
                 </button>
@@ -320,37 +373,171 @@ onMounted(() => {
         <div v-if="isPreviewing" class="modal-overlay" @click="isPreviewing = false">
           <div class="modal-content preview-modal" @click.stop>
             <div class="modal-header">
-              <h2>Preview: {{ sections.find(s => s.active)?.name }}</h2>
+              <h2>Preview: {{ sections.find((s) => s.active)?.name }}</h2>
               <button class="close-btn" @click="isPreviewing = false">×</button>
             </div>
             <div class="modal-body preview-body">
               <div class="form-grid">
-                <div v-for="q in questions" :key="q.id" class="input-group full-width" style="margin-bottom: 24px;">
-                  <label style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 8px;">
+                <div
+                  v-for="q in questions"
+                  :key="q.id"
+                  class="input-group full-width"
+                  style="margin-bottom: 24px"
+                >
+                  <label
+                    style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 8px"
+                  >
                     {{ q.question_number }}. {{ q.question_text }}
-                    <span v-if="q.required" class="required" style="color: #ef4444;">*</span>
+                    <span v-if="q.required" class="required" style="color: #ef4444">*</span>
                   </label>
-                  <p v-if="q.guidance" class="field-help" style="color: #64748b; font-size: 13px; margin-bottom: 12px; font-style: italic;">
+                  <p
+                    v-if="q.guidance"
+                    class="field-help"
+                    style="color: #64748b; font-size: 13px; margin-bottom: 12px; font-style: italic"
+                  >
                     {{ q.guidance }}
                   </p>
-                  
-                  <input v-if="q.answer_type === 'Short Text'" type="text" class="form-input" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" placeholder="Short text answer..." disabled />
-                  <textarea v-else-if="q.answer_type === 'Long Text'" class="form-input" rows="4" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" placeholder="Long text answer..." disabled></textarea>
-                  
-                  <select v-else-if="q.answer_type === 'Dropdown'" class="form-input" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" disabled>
+
+                  <input
+                    v-if="q.answer_type === 'Short Text'"
+                    type="text"
+                    class="form-input"
+                    style="
+                      width: 100%;
+                      padding: 10px;
+                      border: 1px solid #cbd5e1;
+                      border-radius: 6px;
+                    "
+                    placeholder="Short text answer..."
+                    disabled
+                  />
+                  <textarea
+                    v-else-if="q.answer_type === 'Long Text' || q.answer_type === 'text'"
+                    class="form-input"
+                    rows="4"
+                    style="
+                      width: 100%;
+                      padding: 10px;
+                      border: 1px solid #cbd5e1;
+                      border-radius: 6px;
+                    "
+                    placeholder="Long text answer..."
+                    disabled
+                  ></textarea>
+
+                  <select
+                    v-else-if="q.answer_type === 'Dropdown'"
+                    class="form-input"
+                    style="
+                      width: 100%;
+                      padding: 10px;
+                      border: 1px solid #cbd5e1;
+                      border-radius: 6px;
+                    "
+                    disabled
+                  >
                     <option v-for="opt in q.options" :key="opt" :value="opt">{{ opt }}</option>
                   </select>
-                  
-                  <div v-else-if="q.answer_type === 'Radio'" class="radio-group horizontal" style="display: flex; gap: 16px; flex-wrap: wrap;">
-                    <label v-for="opt in q.options" :key="opt" class="radio-label" style="display: flex; align-items: center; gap: 6px; cursor: not-allowed; color: #475569;">
-                      <input type="radio" disabled> {{ opt }}
+
+                  <div
+                    v-else-if="
+                      q.answer_type === 'Radio' ||
+                      q.answer_type === 'single_choice' ||
+                      q.answer_type === 'yes_no'
+                    "
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      gap: 10px;
+                      background: #f8fafc;
+                      padding: 16px;
+                      border-radius: 8px;
+                      border: 1px solid #e2e8f0;
+                    "
+                  >
+                    <label
+                      v-for="opt in q.options || ['Yes', 'No']"
+                      :key="opt"
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        cursor: not-allowed;
+                        color: #475569;
+                        font-size: 14px;
+                        font-weight: 500;
+                      "
+                    >
+                      <input
+                        type="radio"
+                        disabled
+                        style="width: 16px; height: 16px; accent-color: #f58425"
+                      />
+                      {{ opt }}
                     </label>
                   </div>
 
-                  <div v-else-if="q.answer_type === 'Checkbox'" class="checkbox-group horizontal" style="display: flex; gap: 16px; flex-wrap: wrap;">
-                    <label v-for="opt in q.options" :key="opt" class="checkbox-label" style="display: flex; align-items: center; gap: 6px; cursor: not-allowed; color: #475569;">
-                      <input type="checkbox" disabled> {{ opt }}
+                  <div
+                    v-else-if="q.answer_type === 'Checkbox' || q.answer_type === 'multi_choice'"
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      gap: 10px;
+                      background: #f8fafc;
+                      padding: 16px;
+                      border-radius: 8px;
+                      border: 1px solid #e2e8f0;
+                    "
+                  >
+                    <label
+                      v-for="opt in q.options"
+                      :key="opt"
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        cursor: not-allowed;
+                        color: #475569;
+                        font-size: 14px;
+                        font-weight: 500;
+                      "
+                    >
+                      <input
+                        type="checkbox"
+                        disabled
+                        style="width: 16px; height: 16px; accent-color: #f58425"
+                      />
+                      {{ opt }}
                     </label>
+                  </div>
+
+                  <div
+                    v-else-if="q.answer_type === 'matrix'"
+                    class="matrix-grid-container"
+                    style="
+                      background: #f8fafc;
+                      padding: 16px;
+                      border-radius: 8px;
+                      border: 1px solid #e2e8f0;
+                      overflow-x: auto;
+                    "
+                  >
+                    <table class="custom-matrix-table">
+                      <thead>
+                        <tr>
+                          <th>Category</th>
+                          <th v-for="col in q.options.columns" :key="col">{{ col }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="row in q.options.rows" :key="row">
+                          <td class="row-label">{{ row }}</td>
+                          <td v-for="col in q.options.columns" :key="col" class="checkbox-cell">
+                            <input type="checkbox" disabled class="matrix-checkbox" />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -360,7 +547,6 @@ onMounted(() => {
             </div>
           </div>
         </div>
-
       </div>
     </main>
   </div>
@@ -605,8 +791,8 @@ onMounted(() => {
   color: #475569;
 }
 
-.form-group input[type="text"],
-.form-group input[type="number"],
+.form-group input[type='text'],
+.form-group input[type='number'],
 .form-group select,
 .form-group textarea {
   background: #ffffff;
@@ -652,7 +838,7 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 500;
   color: #0f172a;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .btn-icon {
@@ -698,7 +884,7 @@ onMounted(() => {
   margin: 0;
 }
 
-.checkbox-group input[type="checkbox"] {
+.checkbox-group input[type='checkbox'] {
   width: 18px;
   height: 18px;
   accent-color: #f58425;
@@ -922,9 +1108,16 @@ onMounted(() => {
   align-items: center;
 }
 
-.bg-light { background: #f1f5f9; }
-.bg-red-light { background: #fee2e2; }
-.bg-gold { background: #d97706; color: #ffffff; }
+.bg-light {
+  background: #f1f5f9;
+}
+.bg-red-light {
+  background: #fee2e2;
+}
+.bg-gold {
+  background: #d97706;
+  color: #ffffff;
+}
 
 .metric-content {
   display: flex;
@@ -957,8 +1150,12 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.text-red { color: #b91c1c; }
-.text-gold-dark { color: #ffffff; }
+.text-red {
+  color: #b91c1c;
+}
+.text-gold-dark {
+  color: #ffffff;
+}
 
 .metric-icon-box {
   width: 56px;
@@ -969,9 +1166,18 @@ onMounted(() => {
   justify-content: center;
 }
 
-.bg-blue { background: #0f172a; color: #ffffff; }
-.bg-red { background: #b91c1c; color: #ffffff; }
-.bg-gold-dark { background: #78350f; color: #ffffff; }
+.bg-blue {
+  background: #0f172a;
+  color: #ffffff;
+}
+.bg-red {
+  background: #b91c1c;
+  color: #ffffff;
+}
+.bg-gold-dark {
+  background: #78350f;
+  color: #ffffff;
+}
 
 .metric-icon-box svg {
   width: 24px;
@@ -1019,7 +1225,9 @@ onMounted(() => {
   padding: 20px;
   display: flex;
   gap: 16px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .task-item:hover {
@@ -1035,9 +1243,15 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.task-indicator.red { background: #ef4444; }
-.task-indicator.gold { background: #d97706; }
-.task-indicator.gray { background: #cbd5e1; }
+.task-indicator.red {
+  background: #ef4444;
+}
+.task-indicator.gold {
+  background: #d97706;
+}
+.task-indicator.gray {
+  background: #cbd5e1;
+}
 
 .task-content {
   flex: 1;
@@ -1058,9 +1272,18 @@ onMounted(() => {
   letter-spacing: 0.05em;
 }
 
-.tag-red { background: #fee2e2; color: #b91c1c; }
-.tag-gold { background: #fef3c7; color: #b45309; }
-.tag-gray { background: #e2e8f0; color: #475569; }
+.tag-red {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.tag-gold {
+  background: #fef3c7;
+  color: #b45309;
+}
+.tag-gray {
+  background: #e2e8f0;
+  color: #475569;
+}
 
 .task-due {
   font-size: 12px;
@@ -1185,8 +1408,14 @@ onMounted(() => {
   margin: 0 auto;
 }
 
-.day.muted { color: #cbd5e1; }
-.day.active-red { color: #ef4444; font-weight: 700; position: relative; }
+.day.muted {
+  color: #cbd5e1;
+}
+.day.active-red {
+  color: #ef4444;
+  font-weight: 700;
+  position: relative;
+}
 .day.active-red::after {
   content: '';
   position: absolute;
@@ -1196,7 +1425,9 @@ onMounted(() => {
   background: #ef4444;
   border-radius: 50%;
 }
-.day.active-dot { position: relative; }
+.day.active-dot {
+  position: relative;
+}
 .day.active-dot::after {
   content: '';
   position: absolute;
@@ -1235,8 +1466,12 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.notif-icon.blue { color: #0ea5e9; }
-.notif-icon.gray { color: #64748b; }
+.notif-icon.blue {
+  color: #0ea5e9;
+}
+.notif-icon.gray {
+  color: #64748b;
+}
 
 .notif-content p {
   font-size: 13px;
@@ -1305,5 +1540,49 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   background: #f8fafc;
+}
+
+.custom-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.custom-matrix-table th {
+  background: #f1f5f9;
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+}
+.custom-matrix-table th:first-child {
+  text-align: left;
+}
+
+.custom-matrix-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.custom-matrix-table .row-label {
+  font-size: 13px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.custom-matrix-table .checkbox-cell {
+  text-align: center;
+}
+
+.matrix-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #f58425;
+  cursor: pointer;
 }
 </style>

@@ -6,28 +6,69 @@ import DpoSidebar from './components/DpoSidebar.vue'
 const authStore = useAuthStore()
 
 const risks = ref([
-  { id: 'RSK-101', project: 'Cloud Transformation Q3', description: 'Data breach during migration phase', impact: 'Critical', likelihood: 'Medium', mitigation: 'End-to-end encryption, phased migration, audit logs.', status: 'Open' },
-  { id: 'RSK-102', project: 'Partner Portal V2', description: 'Unauthorized access via third-party API', impact: 'High', likelihood: 'High', mitigation: 'Implement OAuth 2.0, strict API rate limiting, IP whitelisting.', status: 'Mitigating' },
-  { id: 'RSK-103', project: 'HR Analytics Dashboard', description: 'Accidental exposure of PII to unauthorized internal staff', impact: 'High', likelihood: 'Low', mitigation: 'Role-based access control, data anonymization for aggregate views.', status: 'Open' },
-  { id: 'RSK-104', project: 'Mobile App Tracking Update', description: 'Non-compliance with GDPR consent requirements', impact: 'Critical', likelihood: 'Low', mitigation: 'Implement explicit opt-in banner, document consent logs.', status: 'Closed' },
+  {
+    id: 'RSK-101',
+    project: 'Cloud Transformation Q3',
+    description: 'Data breach during migration phase',
+    impact: 'Critical',
+    likelihood: 'Medium',
+    mitigation: 'End-to-end encryption, phased migration, audit logs.',
+    status: 'Open',
+  },
+  {
+    id: 'RSK-102',
+    project: 'Partner Portal V2',
+    description: 'Unauthorized access via third-party API',
+    impact: 'High',
+    likelihood: 'High',
+    mitigation: 'Implement OAuth 2.0, strict API rate limiting, IP whitelisting.',
+    status: 'Mitigating',
+  },
+  {
+    id: 'RSK-103',
+    project: 'HR Analytics Dashboard',
+    description: 'Accidental exposure of PII to unauthorized internal staff',
+    impact: 'High',
+    likelihood: 'Low',
+    mitigation: 'Role-based access control, data anonymization for aggregate views.',
+    status: 'Open',
+  },
+  {
+    id: 'RSK-104',
+    project: 'Mobile App Tracking Update',
+    description: 'Non-compliance with GDPR consent requirements',
+    impact: 'Critical',
+    likelihood: 'Low',
+    mitigation: 'Implement explicit opt-in banner, document consent logs.',
+    status: 'Closed',
+  },
 ])
 
 const getStatusClass = (status: string) => {
   switch (status) {
-    case 'Closed': return 'status-success'
-    case 'Open': return 'status-warning'
-    case 'Mitigating': return 'status-primary'
-    default: return 'status-gray'
+    case 'Closed':
+      return 'status-success'
+    case 'Open':
+      return 'status-warning'
+    case 'Mitigating':
+      return 'status-primary'
+    default:
+      return 'status-gray'
   }
 }
 
 const getSeverityClass = (severity: string) => {
   switch (severity) {
-    case 'Critical': return 'risk-critical'
-    case 'High': return 'risk-high'
-    case 'Medium': return 'risk-medium'
-    case 'Low': return 'risk-low'
-    default: return 'risk-low'
+    case 'Critical':
+      return 'risk-critical'
+    case 'High':
+      return 'risk-high'
+    case 'Medium':
+      return 'risk-medium'
+    case 'Low':
+      return 'risk-low'
+    default:
+      return 'risk-low'
   }
 }
 </script>
@@ -42,7 +83,13 @@ const getSeverityClass = (severity: string) => {
       <!-- Top Navigation -->
       <header class="top-nav">
         <div class="search-bar">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
@@ -84,11 +131,11 @@ const getSeverityClass = (severity: string) => {
         <div class="dashboard-header">
           <div>
             <h1 class="page-title">Global Risk Register</h1>
-            <p class="page-subtitle">Track and monitor identified privacy risks across all active projects.</p>
+            <p class="page-subtitle">
+              Track and monitor identified privacy risks across all active projects.
+            </p>
           </div>
-          <button class="btn-primary">
-            Export Report
-          </button>
+          <button class="btn-primary">Export Report</button>
         </div>
 
         <div class="table-card">
@@ -413,10 +460,22 @@ const getSeverityClass = (severity: string) => {
   display: inline-block;
 }
 
-.risk-critical { background: #7f1d1d; color: #ffffff; }
-.risk-high { background: #fee2e2; color: #b91c1c; }
-.risk-medium { background: #fef3c7; color: #b45309; }
-.risk-low { background: #f1f5f9; color: #475569; }
+.risk-critical {
+  background: #7f1d1d;
+  color: #ffffff;
+}
+.risk-high {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.risk-medium {
+  background: #fef3c7;
+  color: #b45309;
+}
+.risk-low {
+  background: #f1f5f9;
+  color: #475569;
+}
 
 .status-badge {
   font-size: 12px;
@@ -433,13 +492,24 @@ const getSeverityClass = (severity: string) => {
   border-radius: 50%;
 }
 
-.status-success { color: #059669; }
-.status-success::before { background: #10b981; }
+.status-success {
+  color: #059669;
+}
+.status-success::before {
+  background: #10b981;
+}
 
-.status-primary { color: #0f172a; }
-.status-primary::before { background: #3b82f6; }
+.status-primary {
+  color: #0f172a;
+}
+.status-primary::before {
+  background: #3b82f6;
+}
 
-.status-warning { color: #b45309; }
-.status-warning::before { background: #f59e0b; }
-
+.status-warning {
+  color: #b45309;
+}
+.status-warning::before {
+  background: #f59e0b;
+}
 </style>

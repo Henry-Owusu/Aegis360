@@ -8,27 +8,60 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const risks = ref([
-  { id: 'RSK-101', project: 'Cloud Transformation Q3', description: 'Data breach during migration phase', impact: 'Critical', likelihood: 'Medium', mitigation: 'End-to-end encryption, phased migration, audit logs.', status: 'Open' },
-  { id: 'RSK-102', project: 'Cloud Transformation Q3', description: 'Unauthorized access via third-party API', impact: 'High', likelihood: 'High', mitigation: 'Implement OAuth 2.0, strict API rate limiting, IP whitelisting.', status: 'Mitigating' },
-  { id: 'RSK-104', project: 'Mobile App Tracking Update', description: 'Non-compliance with GDPR consent requirements', impact: 'Critical', likelihood: 'Low', mitigation: 'Implement explicit opt-in banner, document consent logs.', status: 'Closed' },
+  {
+    id: 'RSK-101',
+    project: 'Cloud Transformation Q3',
+    description: 'Data breach during migration phase',
+    impact: 'Critical',
+    likelihood: 'Medium',
+    mitigation: 'End-to-end encryption, phased migration, audit logs.',
+    status: 'Open',
+  },
+  {
+    id: 'RSK-102',
+    project: 'Cloud Transformation Q3',
+    description: 'Unauthorized access via third-party API',
+    impact: 'High',
+    likelihood: 'High',
+    mitigation: 'Implement OAuth 2.0, strict API rate limiting, IP whitelisting.',
+    status: 'Mitigating',
+  },
+  {
+    id: 'RSK-104',
+    project: 'Mobile App Tracking Update',
+    description: 'Non-compliance with GDPR consent requirements',
+    impact: 'Critical',
+    likelihood: 'Low',
+    mitigation: 'Implement explicit opt-in banner, document consent logs.',
+    status: 'Closed',
+  },
 ])
 
 const getStatusClass = (status: string) => {
   switch (status) {
-    case 'Closed': return 'status-success'
-    case 'Open': return 'status-warning'
-    case 'Mitigating': return 'status-primary'
-    default: return 'status-gray'
+    case 'Closed':
+      return 'status-success'
+    case 'Open':
+      return 'status-warning'
+    case 'Mitigating':
+      return 'status-primary'
+    default:
+      return 'status-gray'
   }
 }
 
 const getSeverityClass = (severity: string) => {
   switch (severity) {
-    case 'Critical': return 'risk-critical'
-    case 'High': return 'risk-high'
-    case 'Medium': return 'risk-medium'
-    case 'Low': return 'risk-low'
-    default: return 'risk-low'
+    case 'Critical':
+      return 'risk-critical'
+    case 'High':
+      return 'risk-high'
+    case 'Medium':
+      return 'risk-medium'
+    case 'Low':
+      return 'risk-low'
+    default:
+      return 'risk-low'
   }
 }
 
@@ -54,7 +87,13 @@ const handleLogout = () => {
       <!-- Center Search Bar -->
       <div class="search-container">
         <div class="search-input-wrapper">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
@@ -65,7 +104,13 @@ const handleLogout = () => {
       <!-- Right Action & Profile Section -->
       <div class="navbar-actions">
         <button type="button" class="notification-btn" title="Notifications">
-          <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="bell-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
@@ -93,11 +138,11 @@ const handleLogout = () => {
         <div class="dashboard-header">
           <div>
             <h1 class="page-title">Project Risk Register</h1>
-            <p class="page-subtitle">Track and monitor identified privacy risks for your assigned projects.</p>
+            <p class="page-subtitle">
+              Track and monitor identified privacy risks for your assigned projects.
+            </p>
           </div>
-          <button class="btn-primary">
-            Export Report
-          </button>
+          <button class="btn-primary">Export Report</button>
         </div>
 
         <div class="table-card">
@@ -471,10 +516,22 @@ const handleLogout = () => {
   display: inline-block;
 }
 
-.risk-critical { background: #7f1d1d; color: #ffffff; }
-.risk-high { background: #fee2e2; color: #b91c1c; }
-.risk-medium { background: #fef3c7; color: #b45309; }
-.risk-low { background: #f1f5f9; color: #475569; }
+.risk-critical {
+  background: #7f1d1d;
+  color: #ffffff;
+}
+.risk-high {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.risk-medium {
+  background: #fef3c7;
+  color: #b45309;
+}
+.risk-low {
+  background: #f1f5f9;
+  color: #475569;
+}
 
 .status-badge {
   font-size: 12px;
@@ -491,13 +548,24 @@ const handleLogout = () => {
   border-radius: 50%;
 }
 
-.status-success { color: #059669; }
-.status-success::before { background: #10b981; }
+.status-success {
+  color: #059669;
+}
+.status-success::before {
+  background: #10b981;
+}
 
-.status-primary { color: #0f172a; }
-.status-primary::before { background: #3b82f6; }
+.status-primary {
+  color: #0f172a;
+}
+.status-primary::before {
+  background: #3b82f6;
+}
 
-.status-warning { color: #b45309; }
-.status-warning::before { background: #f59e0b; }
-
+.status-warning {
+  color: #b45309;
+}
+.status-warning::before {
+  background: #f59e0b;
+}
 </style>
