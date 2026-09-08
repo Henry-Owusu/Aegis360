@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import PmSidebar from './components/PmSidebar.vue'
 import { dpiaApi } from '@/services/api'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const currentStep = ref(1) // 1: Basic Data, 2: Screening, 3: Full PIA
-const assessmentId = ref<string | null>(null)
+const assessmentId = ref<string | null>((route.params.id as string) || null)
+const isReadOnly = ref(!!assessmentId.value)
+const isNew = ref(!assessmentId.value)
+const assessmentStatus = ref('')
 
 // Step 1: Fixed metadata
 const title = ref('')
@@ -38,8 +42,53 @@ const loadQuestions = async () => {
   }
 }
 
-onMounted(() => {
-  loadQuestions()
+const loadAssessmentData = async (id: string) => {
+  isLoading.value = true
+  try {
+    const [metaRes, respRes] = await Promise.all([
+      dpiaApi.getAssessment(id),
+      dpiaApi.getResponses(id)
+    ])
+    
+    // Check if the backend wraps the meta response in "assessment" or not
+    const meta = ('assessment' in metaRes) ? (metaRes as any).assessment : metaRes
+    
+    title.value = meta.title
+    projectManager.value = meta.project_manager
+    assessmentStatus.value = meta.status
+
+    if (respRes.responses) {
+      // Map responses to basicData and screening dicts
+      const bdResps: Record<string, any> = {}
+      const scResps: Record<string, any> = {}
+      
+      // We need to know which question belongs to which section
+      for (const [qId, answer] of Object.entries(respRes.responses)) {
+        if (basicDataQuestions.value.find(q => q.id.toString() === qId)) {
+          bdResps[qId] = answer
+        } else if (screeningQuestions.value.find(q => q.id.toString() === qId)) {
+          scResps[qId] = answer
+        }
+      }
+      
+      basicDataResponses.value = bdResps
+      screeningResponses.value = scResps
+    }
+  } catch (error) {
+    console.error('Failed to load assessment data', error)
+    alert('Failed to load assessment data')
+  }
+  isLoading.value = false
+}
+
+onMounted(async () => {
+  await loadQuestions()
+  if (assessmentId.value && assessmentId.value !== 'new') {
+    await loadAssessmentData(assessmentId.value)
+  } else {
+    isReadOnly.value = false
+    assessmentId.value = null
+  }
 })
 
 const handleNavigateModules = () => {
@@ -73,7 +122,33 @@ const handleSaveDraft = async () => {
   window.alert('DPIA Assessment Draft saved successfully!')
 }
 
+const handleEdit = () => {
+  isReadOnly.value = false
+}
+
+const handleSubmitAssessment = async () => {
+  if (!assessmentId.value) return
+  isLoading.value = true
+  try {
+    // Optionally save drafts before submitting
+    if (currentStep.value === 1) await dpiaApi.saveResponses(assessmentId.value, basicDataResponses.value)
+    if (currentStep.value === 2) await dpiaApi.saveResponses(assessmentId.value, screeningResponses.value)
+    
+    await dpiaApi.submitAssessment(assessmentId.value)
+    window.alert('DPIA Assessment submitted successfully for DPO Review!')
+    router.push('/pm/dashboard')
+  } catch (err) {
+    console.error('Failed to submit:', err)
+    window.alert('Failed to submit assessment.')
+  }
+  isLoading.value = false
+}
+
 const handleNextStep = async () => {
+  if (isReadOnly.value) {
+    currentStep.value = 2
+    return
+  }
   isLoading.value = true
   try {
     if (currentStep.value === 1) {
@@ -93,8 +168,8 @@ const handleNextStep = async () => {
       currentStep.value = 2
     } else if (currentStep.value === 2) {
       await dpiaApi.saveResponses(assessmentId.value, screeningResponses.value)
-      window.alert('DPIA Assessment submitted successfully for DPO Review!')
-      router.push('/pm/dashboard')
+      // Save & Continue on step 2 could just save, or we can prompt to submit
+      window.alert('Responses saved successfully!')
     }
   } catch (err) {
     console.error('Error during step transition:', err)
@@ -159,13 +234,37 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
       <main class="content-area">
         <div class="wizard-header">
           <div class="wizard-title-block">
-            <h1>Create DPIA Assessment</h1>
-            <p>Complete the required sections below. Progress is saved automatically.</p>
+            <h1>{{ isNew ? 'Create DPIA Assessment' : 'Assessment Details' }}</h1>
+            <p v-if="!isReadOnly">Complete the required sections below. Progress is saved automatically.</p>
+            <p v-else>Viewing assessment. Click Edit to make changes.</p>
           </div>
           <div class="wizard-actions">
-            <button class="btn-secondary" @click="handleSaveDraft" :disabled="isLoading">
-              Save Draft
-            </button>
+            <!-- Read Only Actions -->
+            <template v-if="isReadOnly">
+              <button 
+                v-if="['draft', 'needs mitigation'].includes(assessmentStatus.toLowerCase())"
+                class="btn-secondary" 
+                style="margin-right: 12px;" 
+                @click="handleEdit" 
+                :disabled="isLoading"
+              >
+                Edit
+              </button>
+              <button 
+                v-if="['draft', 'needs mitigation'].includes(assessmentStatus.toLowerCase())"
+                class="btn-primary" 
+                @click="handleSubmitAssessment" 
+                :disabled="isLoading"
+              >
+                Send / Submit
+              </button>
+            </template>
+            <!-- Edit Actions -->
+            <template v-else>
+              <button class="btn-secondary" @click="handleSaveDraft" :disabled="isLoading">
+                Save Draft
+              </button>
+            </template>
           </div>
         </div>
 
@@ -229,6 +328,7 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
                   v-model="title"
                   class="form-input"
                   placeholder="Enter project or assessment name"
+                  :disabled="isReadOnly"
                 />
               </div>
 
@@ -239,6 +339,7 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
                   v-model="projectManager"
                   class="form-input"
                   placeholder="Name of Project Manager"
+                  :disabled="isReadOnly"
                 />
               </div>
             </div>
@@ -260,6 +361,7 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
                   class="form-input"
                   v-model="basicDataResponses[q.id]"
                   placeholder="Enter response..."
+                  :disabled="isReadOnly"
                 />
                 <textarea
                   v-else-if="q.answer_type === 'Long Text' || q.answer_type === 'text'"
@@ -267,12 +369,14 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
                   rows="4"
                   v-model="basicDataResponses[q.id]"
                   placeholder="Enter detailed response..."
+                  :disabled="isReadOnly"
                 ></textarea>
 
                 <select
                   v-else-if="q.answer_type === 'Dropdown'"
                   class="form-select"
                   v-model="basicDataResponses[q.id]"
+                  :disabled="isReadOnly"
                 >
                   <option disabled value="">Select an option...</option>
                   <option v-for="opt in q.options" :key="opt" :value="opt">{{ opt }}</option>
@@ -296,6 +400,7 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
                       :value="opt"
                       v-model="basicDataResponses[q.id]"
                       class="hidden-radio"
+                      :disabled="isReadOnly"
                     />
                     {{ opt }}
                   </label>
@@ -332,6 +437,7 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
                       :value="opt"
                       v-model="basicDataResponses[q.id]"
                       style="width: 18px; height: 18px; accent-color: #0d9488"
+                      :disabled="isReadOnly"
                     />
                     {{ opt }}
                   </label>
@@ -379,6 +485,7 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
                         :value="opt"
                         v-model="screeningResponses[q.id]"
                         class="hidden-radio"
+                        :disabled="isReadOnly"
                       />
                       {{ opt }}
                     </label>
@@ -394,6 +501,7 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
                     rows="3"
                     v-model="screeningResponses[q.id]"
                     placeholder="Enter response..."
+                    :disabled="isReadOnly"
                   ></textarea>
 
                   <div
@@ -417,6 +525,7 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
                         :value="opt"
                         v-model="screeningResponses[q.id]"
                         style="width: 18px; height: 18px; accent-color: #0d9488"
+                        :disabled="isReadOnly"
                       />
                       {{ opt }}
                     </label>
@@ -439,6 +548,7 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
                               v-model="screeningResponses[q.id][row]"
                               :value="col"
                               class="matrix-checkbox"
+                              :disabled="isReadOnly"
                             />
                           </td>
                         </tr>
@@ -466,7 +576,12 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
             Back
           </button>
           <button class="btn-primary" @click="handleNextStep" :disabled="isLoading">
-            {{ currentStep === 2 ? 'Submit Assessment' : 'Save & Continue' }}
+            <template v-if="isReadOnly">
+              {{ currentStep === 2 ? 'Close' : 'Next Step' }}
+            </template>
+            <template v-else>
+              {{ currentStep === 2 ? 'Save Responses' : 'Save & Continue' }}
+            </template>
             <svg
               v-if="currentStep < 2"
               viewBox="0 0 24 24"

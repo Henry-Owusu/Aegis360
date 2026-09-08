@@ -47,7 +47,9 @@ def list_assessments():
                 "title": a.title,
                 "project_manager": a.project_manager,
                 "status": a.status,
+                "created_by": a.created_by,
                 "created_at": a.created_at.isoformat(),
+                "updated_at": a.updated_at.isoformat(),
             } for a in assessments
         ]
     }), 200

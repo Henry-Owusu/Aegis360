@@ -1,69 +1,64 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import PmSidebar from './components/PmSidebar.vue'
+import { dpiaApi, type AssessmentSummary } from '@/services/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const assessments = ref([
-  {
-    id: 'PIA-2023-081',
-    project: 'Cloud Transformation Q3',
-    date: 'Oct 1, 2023',
-    status: 'Under Review',
-    risk: 'High',
-  },
-  {
-    id: 'PIA-2023-082',
-    project: 'Partner Portal V2',
-    date: 'Sep 28, 2023',
-    status: 'Draft',
-    risk: 'Medium',
-  },
-  {
-    id: 'PIA-2023-084',
-    project: 'Project Phoenix',
-    date: 'Oct 15, 2023',
-    status: 'Needs Mitigation',
-    risk: 'High',
-  },
-  {
-    id: 'PIA-2023-078',
-    project: 'Mobile App Tracking Update',
-    date: 'Sep 10, 2023',
-    status: 'Approved',
-    risk: 'Low',
-  },
-])
+const assessments = ref<AssessmentSummary[]>([])
+const isLoading = ref(true)
+
+const filterStatus = ref('All Statuses')
+
+const filteredAssessments = computed(() => {
+  return assessments.value.filter((a) => {
+    if (filterStatus.value === 'All Statuses') return true
+    
+    // Convert status to friendly label for matching the dropdown
+    const friendlyStatus = getStatusLabel(a.status)
+    return friendlyStatus === filterStatus.value
+  })
+})
+
+const fetchData = async () => {
+  isLoading.value = true
+  try {
+    const res = await dpiaApi.listAssessments()
+    // For PMs, we ideally only want to show their own assessments.
+    // Assuming backend returns all for now, we'll filter them locally if needed,
+    // or assume the backend handles PM filtering.
+    assessments.value = res.assessments.filter((a) => a.created_by === authStore.user.id || authStore.user.roles.includes('System Administrator'))
+  } catch (err) {
+    console.error('Failed to load assessments:', err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
 const getStatusClass = (status: string) => {
-  switch (status) {
-    case 'Approved':
+  switch (status.toLowerCase()) {
+    case 'approved':
       return 'status-success'
-    case 'Under Review':
+    case 'dpo_review':
+    case 'screening':
       return 'status-primary'
-    case 'Needs Mitigation':
+    case 'rejected':
       return 'status-warning'
-    case 'Draft':
+    case 'draft':
       return 'status-gray'
     default:
       return 'status-gray'
   }
 }
 
-const getRiskClass = (risk: string) => {
-  switch (risk) {
-    case 'High':
-      return 'risk-high'
-    case 'Medium':
-      return 'risk-medium'
-    case 'Low':
-      return 'risk-low'
-    default:
-      return 'risk-low'
-  }
+const getStatusLabel = (status: string) => {
+  return status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')
 }
 
 const handleNavigateModules = () => {
@@ -78,6 +73,18 @@ const handleLogout = () => {
 const handleCreateAssessment = () => {
   router.push('/pm/dpia/new')
 }
+
+const submitAssessment = async (id: string) => {
+  if (!confirm('Are you sure you want to submit this assessment for DPO review?')) return
+  try {
+    await dpiaApi.submitAssessment(id)
+    fetchData() // Refresh list
+  } catch (err) {
+    alert('Failed to submit assessment')
+  }
+}
+
+onMounted(fetchData)
 </script>
 
 <template>
@@ -125,7 +132,7 @@ const handleCreateAssessment = () => {
         <div class="user-profile-menu" @click="handleLogout" title="Click to Sign Out">
           <div class="user-info">
             <span class="user-name">{{ authStore.user.name }}</span>
-            <span class="user-role">{{ authStore.user.role }}</span>
+            <span class="user-role">{{ authStore.user.roles[0] }}</span>
           </div>
           <div class="avatar-container">
             <img :src="authStore.user.avatar" :alt="authStore.user.name" class="user-avatar" />
@@ -163,46 +170,52 @@ const handleCreateAssessment = () => {
         <div class="table-card">
           <div class="table-toolbar">
             <div class="toolbar-left">
-              <select class="filter-select">
+              <select class="filter-select" v-model="filterStatus">
                 <option>All Statuses</option>
                 <option>Draft</option>
-                <option>Under Review</option>
+                <option>Screening</option>
+                <option>Dpo review</option>
                 <option>Approved</option>
+                <option>Rejected</option>
               </select>
             </div>
             <div class="toolbar-right">
-              <span class="results-count">{{ assessments.length }} Assessments</span>
+              <span class="results-count">{{ filteredAssessments.length }} Assessments</span>
             </div>
           </div>
 
-          <table class="data-table">
+          <!-- Loading State -->
+          <div v-if="isLoading" style="padding: 40px; text-align: center; color: #64748b;">
+            Loading assessments...
+          </div>
+          
+          <table v-else class="data-table">
             <thead>
               <tr>
                 <th>ID</th>
                 <th>Project Name</th>
                 <th>Last Updated</th>
-                <th>Risk Level</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="assessment in assessments" :key="assessment.id">
-                <td class="col-id">{{ assessment.id }}</td>
-                <td class="col-project">{{ assessment.project }}</td>
-                <td class="col-date">{{ assessment.date }}</td>
-                <td class="col-risk">
-                  <span class="risk-badge" :class="getRiskClass(assessment.risk)">
-                    {{ assessment.risk }}
-                  </span>
+              <tr v-if="filteredAssessments.length === 0">
+                <td colspan="5" style="text-align: center; padding: 32px; color: #94a3b8;">
+                  No assessments found.
                 </td>
+              </tr>
+              <tr v-for="assessment in filteredAssessments" :key="assessment.id">
+                <td class="col-id">{{ assessment.id.substring(0, 8) }}</td>
+                <td class="col-project">{{ assessment.title }}</td>
+                <td class="col-date">{{ formatDate(assessment.updated_at) }}</td>
                 <td class="col-status">
                   <span class="status-badge" :class="getStatusClass(assessment.status)">
-                    {{ assessment.status }}
+                    {{ getStatusLabel(assessment.status) }}
                   </span>
                 </td>
                 <td class="col-action">
-                  <button class="btn-sm btn-outline">Open</button>
+                  <button class="btn-sm btn-outline" @click="router.push(`/pm/dpia/${assessment.id}`)">Open</button>
                 </td>
               </tr>
             </tbody>
@@ -578,5 +591,53 @@ const handleCreateAssessment = () => {
 .btn-outline:hover {
   background: #f1f5f9;
   color: #0f172a;
+}
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.action-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.action-btn.submit-btn:hover {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.action-btn.delete-btn:hover {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.action-btn.download-btn:hover {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
 }
 </style>

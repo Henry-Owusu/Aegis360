@@ -149,7 +149,14 @@ export const dpiaApi = {
       body: JSON.stringify(payload),
     })
   },
-
+  /**
+   * POST /api/dpia/assessments/:id/submit
+   */
+  submitAssessment(id: string): Promise<{ message: string; status: string }> {
+    return request(`/api/dpia/assessments/${id}/submit`, {
+      method: 'POST',
+    })
+  },
   // Questions
   getQuestions(section?: string): Promise<{ questions: any[] }> {
     const query = section ? `?section=${encodeURIComponent(section)}` : ''
