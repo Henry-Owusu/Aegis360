@@ -33,6 +33,31 @@ def list_users():
     }), 200
 
 
+# ── List all DPOs ────────────────────────────────────────────────────────────
+
+@users_bp.get("/dpos")
+@require_auth
+def list_dpos():
+    dpo_role = Role.query.filter_by(name="DPO").first()
+    if not dpo_role:
+        return jsonify({"users": []}), 200
+
+    dpos = User.query.filter(User.roles.contains(dpo_role), User.is_active == True).order_by(User.first_name).all()
+    
+    return jsonify({
+        "users": [
+            {
+                "id": u.id,
+                "email": u.email,
+                "first_name": u.first_name,
+                "last_name": u.last_name,
+                "avatar": f"https://ui-avatars.com/api/?name={u.first_name}+{u.last_name}&background=random",
+            }
+            for u in dpos
+        ]
+    }), 200
+
+
 # ── Get single user ───────────────────────────────────────────────────────────
 
 @users_bp.get("/<user_id>")

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
 import DpoSidebar from './components/DpoSidebar.vue'
 import { dpiaApi, type AssessmentSummary } from '@/services/api'
 
 const authStore = useAuthStore()
+const router = useRouter()
 
 const assessments = ref<AssessmentSummary[]>([])
 
@@ -20,6 +22,10 @@ const loadAssessments = async () => {
 onMounted(() => {
   loadAssessments()
 })
+
+const handleViewAssessment = (id: string) => {
+  router.push(`/dpo/dpia/${id}`)
+}
 
 const getStatusClass = (status: string) => {
   switch (status) {
@@ -154,7 +160,7 @@ const getRiskClass = (risk: string) => {
                   </span>
                 </td>
                 <td class="col-action">
-                  <button class="btn-sm btn-outline">View</button>
+                  <button class="btn-sm btn-outline" @click="handleViewAssessment(assessment.id)">View</button>
                 </td>
               </tr>
             </tbody>

@@ -149,12 +149,35 @@ export const dpiaApi = {
       body: JSON.stringify(payload),
     })
   },
+
+  /**
+   * PUT /api/dpia/assessments/:id
+   */
+  updateAssessment(
+    id: string,
+    payload: { title: string; project_manager: string }
+  ): Promise<{ message: string }> {
+    return request(`/api/dpia/assessments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    })
+  },
   /**
    * POST /api/dpia/assessments/:id/submit
    */
-  submitAssessment(id: string): Promise<{ message: string; status: string }> {
+  submitAssessment(id: string, payload?: { assigned_dpo_id?: string }): Promise<{ message: string; status: string }> {
     return request(`/api/dpia/assessments/${id}/submit`, {
       method: 'POST',
+      body: payload ? JSON.stringify(payload) : undefined,
+    })
+  },
+  /**
+   * POST /api/dpia/assessments/:id/review
+   */
+  reviewAssessment(id: string, payload: { action: string; comments?: string }): Promise<{ message: string; status: string }> {
+    return request(`/api/dpia/assessments/${id}/review`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
     })
   },
   // Questions
@@ -224,6 +247,10 @@ export interface RoleRecord {
 export const usersApi = {
   listUsers(): Promise<{ users: UserRecord[]; total: number }> {
     return request('/api/users')
+  },
+
+  listDPOs(): Promise<{ users: UserRecord[] }> {
+    return request('/api/users/dpos')
   },
 
   toggleStatus(userId: string): Promise<{ id: string; is_active: boolean; message: string }> {

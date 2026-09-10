@@ -99,6 +99,26 @@ def get_assessment(assessment_id):
     }), 200
 
 
+@dpia_bp.put("/assessments/<assessment_id>")
+@require_auth
+@require_permission("assessment.create")
+def update_assessment(assessment_id):
+    assessment = DPIAAssessment.query.get(assessment_id)
+    if not assessment:
+        return jsonify({"error": "Not found"}), 404
+
+    data = request.get_json() or {}
+    
+    if "title" in data:
+        assessment.title = data["title"]
+    if "project_manager" in data:
+        assessment.project_manager = data["project_manager"]
+
+    db.session.commit()
+    return jsonify({"message": "Assessment updated successfully"}), 200
+
+
+
 @dpia_bp.post("/assessments/<assessment_id>/submit")
 @require_auth
 @require_permission("assessment.create")
@@ -107,10 +127,42 @@ def submit_assessment(assessment_id):
     if not assessment:
         return jsonify({"error": "Not found"}), 404
         
+    data = request.get_json() or {}
+    assigned_dpo_id = data.get("assigned_dpo_id")
+    
+    if assigned_dpo_id:
+        assessment.assigned_dpo_id = assigned_dpo_id
+
     assessment.status = "Submitted"
     db.session.commit()
     return jsonify({"message": "Assessment submitted", "status": assessment.status}), 200
 
+
+@dpia_bp.post("/assessments/<assessment_id>/review")
+@require_auth
+@require_role("DPO")
+def review_assessment(assessment_id):
+    assessment = DPIAAssessment.query.get(assessment_id)
+    if not assessment:
+        return jsonify({"error": "Not found"}), 404
+        
+    data = request.get_json() or {}
+    action = data.get("action")
+    
+    if action == "Approve":
+        assessment.status = "Approved"
+    elif action == "Return":
+        assessment.status = "Returned"
+    elif action == "Require Full PIA":
+        assessment.status = "Requires Full PIA"
+    elif action == "Complete Full PIA":
+        assessment.status = "Full PIA Completed"
+    else:
+        return jsonify({"error": "Invalid action"}), 400
+
+    # We might save comments later if we add a comments table. For now just update status.
+    db.session.commit()
+    return jsonify({"message": f"Assessment reviewed and marked as {assessment.status}", "status": assessment.status}), 200
 
 # ============================================================
 # QUESTIONS

@@ -157,9 +157,8 @@ QUESTIONS = [
         "guidance": None,
         "answer_type": "single_choice",
         "options": [
-            "Collecting new personal data",
-            "Using personal data already held by Organisation",
-            "Both",
+            "Collecting Data for the first time",
+            "Using data already held by RB",
         ],
         "required": True,
         "display_order": 8,

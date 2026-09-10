@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import PmSidebar from './components/PmSidebar.vue'
-import { dpiaApi } from '@/services/api'
+import { dpiaApi, usersApi, type UserRecord } from '@/services/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -14,10 +14,16 @@ const assessmentId = ref<string | null>((route.params.id as string) || null)
 const isReadOnly = ref(!!assessmentId.value)
 const isNew = ref(!assessmentId.value)
 const assessmentStatus = ref('')
+const searchQuery = ref('')
 
 // Step 1: Fixed metadata
 const title = ref('')
 const projectManager = ref('')
+
+// DPO Assignment State
+const showDpoModal = ref(false)
+const dpoList = ref<UserRecord[]>([])
+const selectedDpo = ref<string | null>(null)
 
 // Dynamic data
 const basicDataQuestions = ref<any[]>([])
@@ -101,41 +107,80 @@ const handleLogout = () => {
 }
 
 const handleSaveDraft = async () => {
-  if (currentStep.value === 1 && !assessmentId.value) {
-    if (!title.value || !projectManager.value) {
-      alert('Title and Project Manager are required to create a draft.')
-      return
+  if (isReadOnly.value) return
+  isLoading.value = true
+  try {
+    if (!assessmentId.value) {
+      if (!title.value || !projectManager.value) {
+        alert('Title and Project Manager are required to create a draft.')
+        isLoading.value = false
+        return
+      }
+      const res = await dpiaApi.createAssessment({
+        title: title.value,
+        project_manager: projectManager.value,
+      })
+      assessmentId.value = res.id
+    } else {
+      await dpiaApi.updateAssessment(assessmentId.value, {
+        title: title.value,
+        project_manager: projectManager.value,
+      })
     }
-    const res = await dpiaApi.createAssessment({
-      title: title.value,
-      project_manager: projectManager.value,
+    
+    // Save all responses that we have so far
+    await dpiaApi.saveResponses(assessmentId.value, {
+      ...basicDataResponses.value,
+      ...screeningResponses.value
     })
-    assessmentId.value = res.id
+    
+    window.alert('DPIA Assessment Draft saved successfully!')
+  } catch (err) {
+    console.error('Error saving draft:', err)
+    window.alert('Failed to save draft.')
   }
-
-  if (assessmentId.value) {
-    if (currentStep.value === 1)
-      await dpiaApi.saveResponses(assessmentId.value, basicDataResponses.value)
-    if (currentStep.value === 2)
-      await dpiaApi.saveResponses(assessmentId.value, screeningResponses.value)
-  }
-  window.alert('DPIA Assessment Draft saved successfully!')
+  isLoading.value = false
 }
 
 const handleEdit = () => {
   isReadOnly.value = false
 }
 
-const handleSubmitAssessment = async () => {
+const handleOpenAssignModal = async () => {
   if (!assessmentId.value) return
   isLoading.value = true
   try {
-    // Optionally save drafts before submitting
-    if (currentStep.value === 1) await dpiaApi.saveResponses(assessmentId.value, basicDataResponses.value)
-    if (currentStep.value === 2) await dpiaApi.saveResponses(assessmentId.value, screeningResponses.value)
+    // Save metadata and all responses first
+    await dpiaApi.updateAssessment(assessmentId.value, {
+      title: title.value,
+      project_manager: projectManager.value,
+    })
+    await dpiaApi.saveResponses(assessmentId.value, {
+      ...basicDataResponses.value,
+      ...screeningResponses.value
+    })
     
-    await dpiaApi.submitAssessment(assessmentId.value)
-    window.alert('DPIA Assessment submitted successfully for DPO Review!')
+    // Fetch DPOs
+    const res = await usersApi.listDPOs()
+    dpoList.value = res.users
+    showDpoModal.value = true
+  } catch (err) {
+    console.error('Failed to save before submit:', err)
+    window.alert('Failed to save assessment.')
+  }
+  isLoading.value = false
+}
+
+const confirmAndSubmitAssessment = async () => {
+  if (!assessmentId.value || !selectedDpo.value) {
+    window.alert('Please select a DPO to assign.')
+    return
+  }
+  isLoading.value = true
+  try {
+    await dpiaApi.submitAssessment(assessmentId.value, { assigned_dpo_id: selectedDpo.value })
+    window.alert('DPIA Assessment submitted and assigned successfully!')
+    showDpoModal.value = false
     router.push('/pm/dashboard')
   } catch (err) {
     console.error('Failed to submit:', err)
@@ -146,7 +191,11 @@ const handleSubmitAssessment = async () => {
 
 const handleNextStep = async () => {
   if (isReadOnly.value) {
-    currentStep.value = 2
+    if (currentStep.value === 1) {
+      currentStep.value = 2
+    } else {
+      router.push('/pm/dpia')
+    }
     return
   }
   isLoading.value = true
@@ -163,12 +212,23 @@ const handleNextStep = async () => {
           project_manager: projectManager.value,
         })
         assessmentId.value = res.id
+      } else {
+        await dpiaApi.updateAssessment(assessmentId.value, {
+          title: title.value,
+          project_manager: projectManager.value,
+        })
       }
       await dpiaApi.saveResponses(assessmentId.value, basicDataResponses.value)
       currentStep.value = 2
     } else if (currentStep.value === 2) {
-      await dpiaApi.saveResponses(assessmentId.value, screeningResponses.value)
-      // Save & Continue on step 2 could just save, or we can prompt to submit
+      await dpiaApi.updateAssessment(assessmentId.value, {
+        title: title.value,
+        project_manager: projectManager.value,
+      })
+      await dpiaApi.saveResponses(assessmentId.value, {
+        ...basicDataResponses.value,
+        ...screeningResponses.value
+      })
       window.alert('Responses saved successfully!')
     }
   } catch (err) {
@@ -211,7 +271,46 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
         <img src="/Aegislogo.jpeg" alt="Aegis360 Logo" class="brand-logo-img" />
       </div>
 
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search ERP data..."
+            class="search-input"
+          />
+        </div>
+      </div>
+
       <div class="navbar-actions">
+        <button type="button" class="notification-btn" title="Notifications">
+          <svg
+            class="bell-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-dot"></span>
+        </button>
+
         <div class="user-profile-menu" @click="handleLogout" title="Click to Sign Out">
           <div class="user-info">
             <span class="user-name">{{ authStore.user?.name || 'Project Manager' }}</span>
@@ -243,25 +342,36 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
             <template v-if="isReadOnly">
               <button 
                 v-if="['draft', 'needs mitigation'].includes(assessmentStatus.toLowerCase())"
-                class="btn-secondary" 
-                style="margin-right: 12px;" 
+                class="btn-edit" 
                 @click="handleEdit" 
                 :disabled="isLoading"
               >
-                Edit
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                </svg>
+                <span>Edit Assessment</span>
               </button>
               <button 
                 v-if="['draft', 'needs mitigation'].includes(assessmentStatus.toLowerCase())"
-                class="btn-primary" 
-                @click="handleSubmitAssessment" 
+                class="btn-submit" 
+                @click="handleOpenAssignModal" 
                 :disabled="isLoading"
               >
-                Send / Submit
+                <span>Send to DPO</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
               </button>
             </template>
             <!-- Edit Actions -->
             <template v-else>
               <button class="btn-secondary" @click="handleSaveDraft" :disabled="isLoading">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; margin-right: 6px;">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
                 Save Draft
               </button>
             </template>
@@ -605,19 +715,85 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </button>
+
+          <!-- Send to DPO button — only on final step, not read-only -->
+          <button
+            v-if="currentStep === 2 && !isReadOnly"
+            class="btn-send-dpo"
+            @click="handleOpenAssignModal"
+            :disabled="isLoading"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            Send to DPO
+          </button>
         </div>
+
       </main>
+    </div>
+    
+    <!-- Assign DPO Modal -->
+    <div class="dpo-modal-overlay" v-if="showDpoModal" @click.self="showDpoModal = false">
+      <div class="dpo-modal-content fade-in">
+        <div class="dpo-modal-header">
+          <h2>Assign to DPO</h2>
+          <button class="btn-close-modal" @click="showDpoModal = false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="dpo-modal-body">
+          <p class="dpo-instruction">Please select a Data Protection Officer to review this assessment.</p>
+          
+          <div class="dpo-list">
+            <div 
+              v-for="dpo in dpoList" 
+              :key="dpo.id"
+              :class="['dpo-item', { 'selected': selectedDpo === dpo.id }]"
+              @click="selectedDpo = dpo.id"
+            >
+              <img :src="dpo.avatar || `https://ui-avatars.com/api/?name=${dpo.first_name}+${dpo.last_name}&background=random`" class="dpo-avatar" alt="Avatar" />
+              <div class="dpo-details">
+                <span class="dpo-name">{{ dpo.first_name }} {{ dpo.last_name }}</span>
+                <span class="dpo-email">{{ dpo.email }}</span>
+              </div>
+              <div class="dpo-check" v-if="selectedDpo === dpo.id">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+            </div>
+            
+            <div v-if="dpoList.length === 0" class="dpo-empty">
+              <p>No active DPOs found.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="dpo-modal-footer">
+          <button class="btn-secondary" @click="showDpoModal = false">Cancel</button>
+          <button class="btn-submit" @click="confirmAndSubmitAssessment" :disabled="!selectedDpo || isLoading">
+            Confirm & Send
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .dpia-assessment-layout {
-  min-height: 100vh;
+  height: 100vh;
   width: 100%;
   display: flex;
   flex-direction: column;
   background-color: #f1f5f9; /* Softer, premium background */
+  overflow: hidden;
 }
 
 /* Top Navbar */
@@ -652,6 +828,69 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
   display: flex;
   align-items: center;
   gap: 24px;
+}
+
+.search-container {
+  flex: 1;
+  max-width: 480px;
+  margin: 0 40px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+}
+
+.search-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 18px 0 46px;
+  background-color: #f1f5f9;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: #0f172a;
+  outline: none;
+}
+
+.notification-btn {
+  position: relative;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 42px;
+  height: 42px;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bell-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.notification-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
 }
 
 .user-profile-menu {
@@ -704,6 +943,8 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
 .main-body {
   flex: 1;
   display: flex;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Main Workspace */
@@ -715,6 +956,7 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
   display: flex;
   flex-direction: column;
   gap: 32px;
+  overflow-y: auto;
 }
 
 /* Header */
@@ -722,6 +964,12 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+}
+
+.wizard-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .wizard-title-block h1 {
@@ -736,6 +984,229 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
 .wizard-title-block p {
   font-size: 14px;
   color: #64748b;
+}
+
+.btn-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.02);
+  transition: all 0.2s;
+}
+
+.btn-edit svg {
+  width: 16px;
+  height: 16px;
+  color: #64748b;
+}
+
+.btn-edit:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.btn-edit:hover svg {
+  color: #0f172a;
+}
+
+.btn-submit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 24px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-family);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-nav-action svg {
+  width: 16px;
+  height: 16px;
+  color: #64748b;
+  transition: transform 0.2s;
+}
+
+/* Modal Styling */
+.dpo-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dpo-modal-content {
+  background: #ffffff;
+  width: 500px;
+  max-width: 90vw;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dpo-modal-header {
+  padding: 24px 32px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dpo-modal-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.btn-close-modal:hover {
+  color: #0f172a;
+}
+
+.btn-close-modal svg {
+  width: 20px;
+  height: 20px;
+}
+
+.dpo-modal-body {
+  padding: 0 32px 24px;
+}
+
+.dpo-instruction {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.dpo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 350px;
+  overflow-y: auto;
+  padding-right: 8px; /* for scrollbar */
+}
+
+.dpo-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dpo-item:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.dpo-item.selected {
+  border-color: #0f172a;
+  background: #f1f5f9;
+}
+
+.dpo-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.dpo-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.dpo-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.dpo-email {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.dpo-check {
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dpo-check svg {
+  width: 18px;
+  height: 18px;
+}
+
+.dpo-empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 24px 0;
+  font-size: 14px;
+}
+
+.dpo-modal-footer {
+  padding: 20px 32px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btn-submit:hover {
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-submit:hover svg {
+  transform: translateX(3px) translateY(-3px);
+}
+
+.btn-submit:active {
+  transform: translateY(0);
 }
 
 .btn-secondary {
@@ -853,6 +1324,7 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
   box-shadow:
     0 10px 40px rgba(15, 23, 42, 0.04),
     inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  flex: 1;
 }
 
 .section-header-box {
@@ -1205,6 +1677,40 @@ const renderInput = (question: any, vModelTarget: Record<string, any>) => {
 }
 
 .btn-primary svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-send-dpo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 28px;
+  background: #fff7ed;
+  border: 2px solid #F58425;
+  border-radius: 12px;
+  font-family: var(--font-family);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #F58425;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-send-dpo:hover:not(:disabled) {
+  background: #F58425;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(245, 132, 37, 0.25);
+}
+
+.btn-send-dpo:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-send-dpo svg {
   width: 18px;
   height: 18px;
 }

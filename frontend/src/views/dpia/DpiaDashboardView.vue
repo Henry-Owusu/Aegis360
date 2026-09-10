@@ -1,12 +1,54 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import PmSidebar from './components/PmSidebar.vue'
+import { dpiaApi, type AssessmentSummary } from '@/services/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const searchQuery = ref('')
+const assessments = ref<AssessmentSummary[]>([])
+const isLoading = ref(true)
+
+onMounted(async () => {
+  try {
+    const res = await dpiaApi.listAssessments()
+    assessments.value = res.assessments
+  } catch (err) {
+    console.error('Failed to fetch assessments:', err)
+  } finally {
+    isLoading.value = false
+  }
+})
+
+// Computed Metrics
+const draftAssessments = computed(() => 
+  assessments.value.filter(a => ['draft', 'needs mitigation'].includes(a.status.toLowerCase()))
+)
+
+const submittedAssessments = computed(() => 
+  assessments.value.filter(a => ['submitted', 'in review'].includes(a.status.toLowerCase()))
+)
+
+const returnedAssessments = computed(() => 
+  assessments.value.filter(a => ['returned', 'rejected'].includes(a.status.toLowerCase()))
+)
+
+const completedAssessments = computed(() => 
+  assessments.value.filter(a => ['completed', 'approved'].includes(a.status.toLowerCase()))
+)
+
+const complianceScore = computed(() => {
+  const total = assessments.value.length
+  if (total === 0) return 100
+  const good = total - returnedAssessments.value.length - draftAssessments.value.filter(a => a.status.toLowerCase() === 'needs mitigation').length
+  return Math.round((good / total) * 100)
+})
+
+const recentActivity = computed(() => {
+  return [...assessments.value].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).slice(0, 5)
+})
 
 const handleNavigateModules = () => {
   router.push('/modules')
@@ -108,12 +150,11 @@ const handleCreateAssessment = () => {
             <span class="pm-tag">PROJECT MANAGER DASHBOARD</span>
             <h1 class="pm-title">System Status Optimal</h1>
             <p class="pm-desc">
-              You have pending tasks requiring attention. Your current privacy assessment pipeline
-              indicates a bottleneck in DPO reviews.
+              You have {{ draftAssessments.length }} pending tasks requiring attention. 
             </p>
           </div>
           <div class="pm-hero-right">
-            <button type="button" class="add-assessment-btn" @click="handleCreateAssessment">
+            <button type="button" class="add-assessment-btn" @click="handleCreateAssessment" :disabled="isLoading">
               <svg
                 class="plus-icon"
                 viewBox="0 0 24 24"
@@ -149,8 +190,8 @@ const handleCreateAssessment = () => {
                   </div>
                 </div>
                 <div class="metric-body">
-                  <span class="metric-number">12</span>
-                  <span class="metric-trend">↑ +3</span>
+                  <span class="metric-number" v-if="!isLoading">{{ draftAssessments.length }}</span>
+                  <span class="metric-number" v-else>...</span>
                 </div>
               </div>
 
@@ -166,8 +207,8 @@ const handleCreateAssessment = () => {
                   </div>
                 </div>
                 <div class="metric-body">
-                  <span class="metric-number">5</span>
-                  <span class="attention-tag">Needs attention</span>
+                  <span class="metric-number" v-if="!isLoading">{{ submittedAssessments.length }}</span>
+                  <span class="metric-number" v-else>...</span>
                 </div>
               </div>
 
@@ -186,8 +227,8 @@ const handleCreateAssessment = () => {
                   </div>
                 </div>
                 <div class="metric-body">
-                  <span class="metric-number">2</span>
-                  <span class="metric-dots">•••</span>
+                  <span class="metric-number" v-if="!isLoading">{{ returnedAssessments.length }}</span>
+                  <span class="metric-number" v-else>...</span>
                 </div>
               </div>
             </div>
@@ -200,58 +241,33 @@ const handleCreateAssessment = () => {
               </div>
 
               <div class="tasks-list">
-                <!-- Task 1: Complete screening for Project Phoenix -->
-                <div class="task-row">
+                <div v-if="isLoading" class="dpo-empty">Loading tasks...</div>
+                <div v-else-if="draftAssessments.length === 0" class="dpo-empty">No pending tasks.</div>
+                
+                <div v-for="task in draftAssessments" :key="task.id" class="task-row">
                   <div class="task-left">
                     <div class="task-thumb-box">
-                      <img
-                        src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&auto=format&fit=crop&q=80"
-                        alt="Building thumbnail"
-                        class="task-thumb-img"
-                      />
-                      <span class="alert-icon-badge">!</span>
+                      <div class="task-icon-box comment-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                      </div>
                     </div>
                     <div class="task-info">
-                      <h3 class="task-name">Complete screening for Project Phoenix</h3>
+                      <h3 class="task-name">{{ task.title }}</h3>
                       <div class="task-tags">
-                        <span class="tag-critical">Critical</span>
-                        <span class="tag-meta">• Due Today</span>
+                        <span class="tag-review">{{ task.status }}</span>
+                        <span class="tag-meta">• {{ new Date(task.created_at).toLocaleDateString() }}</span>
                       </div>
                     </div>
                   </div>
                   <button
                     type="button"
                     class="task-btn primary-task-btn"
-                    @click="handleStartPhoenix"
+                    @click="router.push(`/pm/dpia/${task.id}`)"
                   >
-                    Start
-                  </button>
-                </div>
-
-                <!-- Task 2: Respond to DPO comments -->
-                <div class="task-row">
-                  <div class="task-left">
-                    <div class="task-icon-box comment-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path
-                          d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                        ></path>
-                      </svg>
-                    </div>
-                    <div class="task-info">
-                      <h3 class="task-name">Respond to DPO comments</h3>
-                      <div class="task-tags">
-                        <span class="tag-review">Review</span>
-                        <span class="tag-meta">• Project Orion DPIA</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    class="task-btn secondary-task-btn"
-                    @click="handleViewOrion"
-                  >
-                    View
+                    Continue
                   </button>
                 </div>
               </div>
@@ -265,28 +281,19 @@ const handleCreateAssessment = () => {
               </div>
 
               <div class="completed-list">
-                <div class="completed-item">
+                <div v-if="isLoading" class="dpo-empty">Loading completed assessments...</div>
+                <div v-else-if="completedAssessments.length === 0" class="dpo-empty" style="text-align: center; color: #94a3b8; font-size: 14px; padding: 12px;">No completed assessments yet.</div>
+                
+                <div v-for="comp in completedAssessments.slice(0, 3)" :key="comp.id" class="completed-item">
                   <div class="item-left">
                     <div class="check-circle-icon">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
                     </div>
-                    <span class="completed-text">Vendor Assessment: CloudTech Inc.</span>
+                    <span class="completed-text">{{ comp.title }}</span>
                   </div>
-                  <span class="time-ago">2 HRS AGO</span>
-                </div>
-
-                <div class="completed-item">
-                  <div class="item-left">
-                    <div class="check-circle-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    </div>
-                    <span class="completed-text">Data Flow Mapping: HR Portal</span>
-                  </div>
-                  <span class="time-ago">YESTERDAY</span>
+                  <span class="time-ago">{{ new Date(comp.updated_at).toLocaleDateString() }}</span>
                 </div>
               </div>
             </div>
@@ -318,7 +325,7 @@ const handleCreateAssessment = () => {
                   />
                 </svg>
                 <div class="donut-center-text">
-                  <span class="score-number">94%</span>
+                  <span class="score-number">{{ isLoading ? '...' : complianceScore + '%' }}</span>
                 </div>
               </div>
 
@@ -330,40 +337,17 @@ const handleCreateAssessment = () => {
             <!-- Activity Feed Widget -->
             <div class="panel-box activity-feed-panel">
               <h3 class="widget-title">Activity Feed</h3>
-
               <div class="activity-timeline">
-                <!-- Activity Item 1 -->
-                <div class="timeline-item">
-                  <div class="timeline-dot"></div>
+                <div v-if="isLoading" class="dpo-empty" style="text-align: center; color: #94a3b8; font-size: 14px; padding: 12px;">Loading activity...</div>
+                <div v-else-if="recentActivity.length === 0" class="dpo-empty" style="text-align: center; color: #94a3b8; font-size: 14px; padding: 12px;">No recent activity.</div>
+                
+                <div v-for="(act, idx) in recentActivity" :key="act.id" class="timeline-item">
+                  <div :class="['timeline-dot', { 'teal': idx === 0 }]"></div>
                   <div class="timeline-content">
-                    <span class="timeline-time">JUST NOW</span>
+                    <span class="timeline-time">{{ new Date(act.updated_at).toLocaleString() }}</span>
                     <p class="timeline-desc">
-                      You assigned <strong>Project Phoenix</strong> to the screening queue.
+                      Assessment <strong>{{ act.title }}</strong> is now <span style="font-weight: 600">{{ act.status }}</span>.
                     </p>
-                  </div>
-                </div>
-
-                <!-- Activity Item 2 -->
-                <div class="timeline-item">
-                  <div class="timeline-dot teal"></div>
-                  <div class="timeline-content">
-                    <span class="timeline-time">2 HOURS AGO</span>
-                    <p class="timeline-desc">
-                      <strong>DPO Marcus Vance</strong> reviewed Project Orion.
-                    </p>
-                    <div class="quote-box">
-                      "Please clarify section 4 regarding data retention periods before final
-                      approval."
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Activity Item 3 -->
-                <div class="timeline-item">
-                  <div class="timeline-dot gray"></div>
-                  <div class="timeline-content">
-                    <span class="timeline-time">YESTERDAY</span>
-                    <p class="timeline-desc">System generated weekly compliance digest.</p>
                   </div>
                 </div>
               </div>
@@ -377,11 +361,12 @@ const handleCreateAssessment = () => {
 
 <style scoped>
 .dpia-layout {
-  min-height: 100vh;
+  height: 100vh;
   width: 100%;
   display: flex;
   flex-direction: column;
   background-color: #f8fafc;
+  overflow: hidden;
 }
 
 /* Top Navbar */
@@ -524,6 +509,8 @@ const handleCreateAssessment = () => {
 .body-container {
   flex: 1;
   display: flex;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Main Content Workspace */

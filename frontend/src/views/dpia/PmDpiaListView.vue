@@ -228,11 +228,12 @@ onMounted(fetchData)
 
 <style scoped>
 .dpia-layout {
-  min-height: 100vh;
+  height: 100vh;
   width: 100%;
   display: flex;
   flex-direction: column;
   background-color: #f8fafc;
+  overflow: hidden;
 }
 
 /* Top Navbar */
@@ -375,6 +376,8 @@ onMounted(fetchData)
 .body-container {
   flex: 1;
   display: flex;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Main Content Workspace */

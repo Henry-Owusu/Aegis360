@@ -39,6 +39,12 @@ class DPIAAssessment(db.Model):
         nullable=False
     )
 
+    assigned_dpo_id = db.Column(
+        db.String(36),
+        db.ForeignKey("users.id"),
+        nullable=True
+    )
+
     created_at = db.Column(
         db.DateTime(timezone=True),
         nullable=False,

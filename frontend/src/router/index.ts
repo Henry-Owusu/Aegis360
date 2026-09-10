@@ -71,6 +71,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresRole: 'PM' },
     },
     {
+      path: '/pm/dpia/:id',
+      name: 'pm-dpia-edit',
+      component: DpiaAssessmentView,
+      meta: { requiresAuth: true, requiresRole: 'PM' },
+    },
+    {
       path: '/pm/risk-register',
       name: 'pm-risk-register',
       component: PmRiskRegisterView,
@@ -93,6 +99,24 @@ const router = createRouter({
       path: '/dpo/dpias',
       name: 'dpo-dpias',
       component: DpoDpiaListView,
+      meta: { requiresAuth: true, requiresRole: 'DPO' },
+    },
+    {
+      path: '/dpo/dpia/:id',
+      name: 'dpo-dpia-review',
+      component: () => import('@/views/dpo/DpoAssessmentReviewView.vue'),
+      meta: { requiresAuth: true, requiresRole: 'DPO' },
+    },
+    {
+      path: '/dpo/dpia/:id/full',
+      name: 'dpo-dpia-full',
+      component: () => import('@/views/dpo/DpoFullPiaView.vue'),
+      meta: { requiresAuth: true, requiresRole: 'DPO' },
+    },
+    {
+      path: '/dpo/dpia/:id/risk',
+      name: 'dpo-dpia-risk',
+      component: () => import('@/views/dpo/DpoRiskIdentificationView.vue'),
       meta: { requiresAuth: true, requiresRole: 'DPO' },
     },
     {
